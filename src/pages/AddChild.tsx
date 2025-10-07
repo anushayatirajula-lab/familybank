@@ -58,7 +58,7 @@ const AddChild = () => {
         .insert({
           parent_id: user.id,
           name,
-          age: age ? parseInt(age) : null,
+          age: parseInt(age),
           pin: pin || null,
         })
         .select()
@@ -143,7 +143,7 @@ const AddChild = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="age">Age (optional)</Label>
+                <Label htmlFor="age">Age *</Label>
                 <Input
                   id="age"
                   type="number"
@@ -152,6 +152,7 @@ const AddChild = () => {
                   value={age}
                   onChange={(e) => setAge(e.target.value)}
                   placeholder="Enter age"
+                  required
                 />
               </div>
 
