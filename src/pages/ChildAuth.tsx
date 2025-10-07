@@ -20,38 +20,32 @@ const ChildAuth = () => {
     setLoading(true);
 
     try {
-      const { data: children, error } = await supabase
-        .from("children")
-        .select("id, name, pin")
-        .eq("name", name)
-        .maybeSingle();
+      // Use secure RPC function to authenticate child
+      const { data, error } = await supabase.rpc('authenticate_child', {
+        p_name: name,
+        p_pin: pin || ''
+      });
 
       if (error) throw error;
 
-      if (!children) {
-        toast({
-          variant: "destructive",
-          title: "Not found",
-          description: "Child not found. Check your name.",
-        });
-        return;
-      }
+      // The RPC returns an array with one result
+      const result = data?.[0];
 
-      if (children.pin && children.pin !== pin) {
+      if (!result?.success) {
         toast({
           variant: "destructive",
-          title: "Wrong PIN",
-          description: "Incorrect PIN. Please try again.",
+          title: "Login Failed",
+          description: result?.message || "Failed to log in. Please try again.",
         });
         return;
       }
 
       toast({
         title: "Welcome!",
-        description: `Hi ${children.name}! Let's check your progress.`,
+        description: `Hi ${result.child_name}! Let's check your progress.`,
       });
       
-      navigate(`/child/${children.id}`);
+      navigate(`/child/${result.child_id}`);
     } catch (error) {
       console.error("Error logging in:", error);
       toast({
