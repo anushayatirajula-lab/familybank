@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { LogOut, Plus, CheckCircle2, Clock } from "lucide-react";
+import { LogOut, Plus, CheckCircle2, Clock, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import coinIcon from "@/assets/coin-icon.png";
 
@@ -144,10 +144,16 @@ const ParentDashboard = () => {
             <h1 className="text-2xl font-bold">FamilyBank</h1>
             <p className="text-sm text-muted-foreground">Welcome back, {parentName}</p>
           </div>
-          <Button variant="outline" onClick={handleLogout}>
-            <LogOut className="mr-2 h-4 w-4" />
-            Logout
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="ghost" onClick={() => navigate("/")}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Home
+            </Button>
+            <Button variant="outline" onClick={handleLogout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              Logout
+            </Button>
+          </div>
         </div>
       </header>
 
