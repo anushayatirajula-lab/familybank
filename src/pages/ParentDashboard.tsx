@@ -184,7 +184,7 @@ const ParentDashboard = () => {
               <Card
                 key={child.id}
                 className="hover:shadow-elevated transition-all cursor-pointer"
-                onClick={() => navigate(`/parent/children/${child.id}`)}
+                onClick={() => navigate(`/parent/child/${child.id}`)}
               >
                 <CardHeader>
                   <div className="flex items-center gap-3">

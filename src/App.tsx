@@ -10,6 +10,8 @@ import ChildDashboard from "./pages/ChildDashboard";
 import AddChild from "./pages/AddChild";
 import CreateChore from "./pages/CreateChore";
 import NotFound from "./pages/NotFound";
+import ChildAuth from "./pages/ChildAuth";
+import ParentChildDetail from "./pages/ParentChildDetail";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +28,8 @@ const App = () => (
           <Route path="/parent/dashboard" element={<ParentDashboard />} />
           <Route path="/parent/children/new" element={<AddChild />} />
           <Route path="/parent/chores/new" element={<CreateChore />} />
+          <Route path="/parent/child/:childId" element={<ParentChildDetail />} />
+          <Route path="/child/login" element={<ChildAuth />} />
           <Route path="/child/:childId" element={<ChildDashboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

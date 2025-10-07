@@ -44,6 +44,15 @@ const Index = () => {
                 >
                   <Link to="/auth/login">Parent Login</Link>
                 </Button>
+
+                <Button 
+                  asChild 
+                  size="lg" 
+                  variant="outline"
+                  className="bg-white/10 backdrop-blur-sm border-primary-foreground/20 text-primary-foreground hover:bg-white/20"
+                >
+                  <Link to="/child/login">Child Login</Link>
+                </Button>
               </div>
               
               <p className="mt-6 text-sm text-primary-foreground/70">
