@@ -1,0 +1,271 @@
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import { CheckCircle, Clock, Star } from "lucide-react";
+import coinIcon from "@/assets/coin-icon.png";
+
+interface Chore {
+  id: string;
+  title: string;
+  description: string | null;
+  token_reward: number;
+  status: string;
+  due_at: string | null;
+}
+
+interface Balance {
+  jar_type: string;
+  amount: number;
+}
+
+const ChildDashboard = () => {
+  const { childId } = useParams();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [child, setChild] = useState<any>(null);
+  const [chores, setChores] = useState<Chore[]>([]);
+  const [balances, setBalances] = useState<Balance[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (childId) {
+      fetchChildData();
+      subscribeToUpdates();
+    }
+  }, [childId]);
+
+  const fetchChildData = async () => {
+    try {
+      // Get child info
+      const { data: childData } = await supabase
+        .from("children")
+        .select("*")
+        .eq("id", childId)
+        .single();
+
+      if (childData) {
+        setChild(childData);
+      }
+
+      // Get chores
+      const { data: choresData } = await supabase
+        .from("chores")
+        .select("*")
+        .eq("child_id", childId)
+        .order("created_at", { ascending: false });
+
+      if (choresData) {
+        setChores(choresData);
+      }
+
+      // Get balances
+      const { data: balancesData } = await supabase
+        .from("balances")
+        .select("*")
+        .eq("child_id", childId);
+
+      if (balancesData) {
+        setBalances(balancesData);
+      }
+    } catch (error) {
+      console.error("Error fetching child data:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load dashboard data.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const subscribeToUpdates = () => {
+    const channel = supabase
+      .channel("child-updates")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "balances",
+          filter: `child_id=eq.${childId}`,
+        },
+        () => fetchChildData()
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "chores",
+          filter: `child_id=eq.${childId}`,
+        },
+        () => fetchChildData()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  };
+
+  const handleSubmitChore = async (choreId: string) => {
+    try {
+      const { error } = await supabase
+        .from("chores")
+        .update({ status: "SUBMITTED", submitted_at: new Date().toISOString() })
+        .eq("id", choreId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Chore submitted!",
+        description: "Waiting for parent approval to earn tokens.",
+      });
+    } catch (error) {
+      console.error("Error submitting chore:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to submit chore.",
+      });
+    }
+  };
+
+  const getTotalBalance = () => {
+    return balances.reduce((sum, b) => sum + Number(b.amount), 0);
+  };
+
+  const getJarColor = (jarType: string) => {
+    const colors: Record<string, string> = {
+      TOYS: "bg-jar-toys",
+      BOOKS: "bg-jar-books",
+      SHOPPING: "bg-jar-shopping",
+      CHARITY: "bg-jar-charity",
+      WISHLIST: "bg-jar-wishlist",
+    };
+    return colors[jarType] || "bg-primary";
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!child) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Child not found</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="border-b bg-gradient-card">
+        <div className="container mx-auto px-4 py-6">
+          <h1 className="text-3xl font-bold">Hi, {child.name}! 👋</h1>
+          <p className="text-muted-foreground">Let's check your progress today</p>
+        </div>
+      </header>
+
+      <div className="container mx-auto px-4 py-8 space-y-8">
+        {/* Wallet Card */}
+        <Card className="bg-gradient-coin shadow-coin">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-3">
+              <img src={coinIcon} alt="Coin" className="w-10 h-10 animate-bounce-subtle" />
+              Your Wallet
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-5xl font-bold mb-6">{getTotalBalance().toFixed(2)} tokens</p>
+            
+            {/* Jars */}
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              {balances.map((balance) => (
+                <div key={balance.jar_type} className="text-center">
+                  <div className={`w-full h-16 rounded-lg ${getJarColor(balance.jar_type)} mb-2 flex items-center justify-center text-white font-bold`}>
+                    {Number(balance.amount).toFixed(0)}
+                  </div>
+                  <p className="text-xs text-muted-foreground capitalize">
+                    {balance.jar_type.toLowerCase()}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Today's Chores */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Your Chores</CardTitle>
+            <CardDescription>Complete chores to earn more tokens!</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {chores.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">
+                  No chores yet. Ask your parent to create some!
+                </p>
+              ) : (
+                chores.map((chore) => (
+                  <div
+                    key={chore.id}
+                    className="flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition-all"
+                  >
+                    <div className="flex items-center gap-4">
+                      {chore.status === "APPROVED" && (
+                        <CheckCircle className="w-6 h-6 text-green-600" />
+                      )}
+                      {chore.status === "SUBMITTED" && (
+                        <Clock className="w-6 h-6 text-yellow-600" />
+                      )}
+                      {chore.status === "PENDING" && (
+                        <div className="w-6 h-6 rounded-full border-2 border-muted" />
+                      )}
+                      <div>
+                        <h3 className="font-semibold">{chore.title}</h3>
+                        {chore.description && (
+                          <p className="text-sm text-muted-foreground">{chore.description}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Badge className="bg-gradient-coin">
+                        <Star className="w-3 h-3 mr-1" />
+                        {Number(chore.token_reward).toFixed(0)}
+                      </Badge>
+                      {chore.status === "PENDING" && (
+                        <Button
+                          size="sm"
+                          onClick={() => handleSubmitChore(chore.id)}
+                        >
+                          Mark Done
+                        </Button>
+                      )}
+                      {chore.status === "SUBMITTED" && (
+                        <Badge variant="outline">Waiting for approval</Badge>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+export default ChildDashboard;
