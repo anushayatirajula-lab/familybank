@@ -17,6 +17,7 @@ const AddChild = () => {
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
+  const [pin, setPin] = useState("");
   const [jarPercentages, setJarPercentages] = useState({
     TOYS: 30,
     BOOKS: 20,
@@ -58,6 +59,7 @@ const AddChild = () => {
           parent_id: user.id,
           name,
           age: age ? parseInt(age) : null,
+          pin: pin || null,
         })
         .select()
         .single();
@@ -151,6 +153,22 @@ const AddChild = () => {
                   onChange={(e) => setAge(e.target.value)}
                   placeholder="Enter age"
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="pin">4-Digit PIN (optional)</Label>
+                <Input
+                  id="pin"
+                  type="password"
+                  maxLength={4}
+                  pattern="[0-9]{4}"
+                  value={pin}
+                  onChange={(e) => setPin(e.target.value.replace(/[^0-9]/g, ''))}
+                  placeholder="Set a 4-digit PIN"
+                />
+                <p className="text-sm text-muted-foreground">
+                  Set a PIN for your child to use when logging in
+                </p>
               </div>
 
               <div className="space-y-4">

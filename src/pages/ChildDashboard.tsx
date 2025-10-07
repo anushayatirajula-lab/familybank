@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle, Clock, Star } from "lucide-react";
+import { CheckCircle, Clock, Star, LogOut, ArrowLeft } from "lucide-react";
 import coinIcon from "@/assets/coin-icon.png";
 import AICoach from "@/components/AICoach";
 
@@ -174,8 +174,22 @@ const ChildDashboard = () => {
       {/* Header */}
       <header className="border-b bg-gradient-card">
         <div className="container mx-auto px-4 py-6">
-          <h1 className="text-3xl font-bold">Hi, {child.name}! 👋</h1>
-          <p className="text-muted-foreground">Let's check your progress today</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold">Hi, {child.name}! 👋</h1>
+              <p className="text-muted-foreground">Let's check your progress today</p>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="ghost" onClick={() => navigate("/")}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Home
+              </Button>
+              <Button variant="outline" onClick={() => navigate("/child/login")}>
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
+              </Button>
+            </div>
+          </div>
         </div>
       </header>
 
