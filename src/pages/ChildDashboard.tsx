@@ -4,9 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle, Clock, Star } from "lucide-react";
 import coinIcon from "@/assets/coin-icon.png";
+import AICoach from "@/components/AICoach";
 
 interface Chore {
   id: string;
@@ -177,92 +179,109 @@ const ChildDashboard = () => {
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-8 space-y-8">
-        {/* Wallet Card */}
-        <Card className="bg-gradient-coin shadow-coin">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-3">
-              <img src={coinIcon} alt="Coin" className="w-10 h-10 animate-bounce-subtle" />
-              Your Wallet
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-5xl font-bold mb-6">{getTotalBalance().toFixed(2)} tokens</p>
-            
-            {/* Jars */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              {balances.map((balance) => (
-                <div key={balance.jar_type} className="text-center">
-                  <div className={`w-full h-16 rounded-lg ${getJarColor(balance.jar_type)} mb-2 flex items-center justify-center text-white font-bold`}>
-                    {Number(balance.amount).toFixed(0)}
-                  </div>
-                  <p className="text-xs text-muted-foreground capitalize">
-                    {balance.jar_type.toLowerCase()}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+      <div className="container mx-auto px-4 py-8">
+        <Tabs defaultValue="dashboard" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="chores">Chores</TabsTrigger>
+            <TabsTrigger value="coach">AI Coach</TabsTrigger>
+          </TabsList>
 
-        {/* Today's Chores */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Your Chores</CardTitle>
-            <CardDescription>Complete chores to earn more tokens!</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {chores.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">
-                  No chores yet. Ask your parent to create some!
-                </p>
-              ) : (
-                chores.map((chore) => (
-                  <div
-                    key={chore.id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition-all"
-                  >
-                    <div className="flex items-center gap-4">
-                      {chore.status === "APPROVED" && (
-                        <CheckCircle className="w-6 h-6 text-green-600" />
-                      )}
-                      {chore.status === "SUBMITTED" && (
-                        <Clock className="w-6 h-6 text-yellow-600" />
-                      )}
-                      {chore.status === "PENDING" && (
-                        <div className="w-6 h-6 rounded-full border-2 border-muted" />
-                      )}
-                      <div>
-                        <h3 className="font-semibold">{chore.title}</h3>
-                        {chore.description && (
-                          <p className="text-sm text-muted-foreground">{chore.description}</p>
-                        )}
+          <TabsContent value="dashboard" className="space-y-6">
+            {/* Wallet Card */}
+            <Card className="bg-gradient-coin shadow-coin">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3">
+                  <img src={coinIcon} alt="Coin" className="w-10 h-10 animate-bounce-subtle" />
+                  Your Wallet
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-5xl font-bold mb-6">{getTotalBalance().toFixed(2)} tokens</p>
+                
+                {/* Jars */}
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                  {balances.map((balance) => (
+                    <div key={balance.jar_type} className="text-center">
+                      <div className={`w-full h-16 rounded-lg ${getJarColor(balance.jar_type)} mb-2 flex items-center justify-center text-white font-bold`}>
+                        {Number(balance.amount).toFixed(0)}
                       </div>
+                      <p className="text-xs text-muted-foreground capitalize">
+                        {balance.jar_type.toLowerCase()}
+                      </p>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <Badge className="bg-gradient-coin">
-                        <Star className="w-3 h-3 mr-1" />
-                        {Number(chore.token_reward).toFixed(0)}
-                      </Badge>
-                      {chore.status === "PENDING" && (
-                        <Button
-                          size="sm"
-                          onClick={() => handleSubmitChore(chore.id)}
-                        >
-                          Mark Done
-                        </Button>
-                      )}
-                      {chore.status === "SUBMITTED" && (
-                        <Badge variant="outline">Waiting for approval</Badge>
-                      )}
-                    </div>
-                  </div>
-                ))
-              )}
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="chores">
+            <Card>
+              <CardHeader>
+                <CardTitle>Your Chores</CardTitle>
+                <CardDescription>Complete chores to earn more tokens!</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {chores.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-8">
+                      No chores yet. Ask your parent to create some!
+                    </p>
+                  ) : (
+                    chores.map((chore) => (
+                      <div
+                        key={chore.id}
+                        className="flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition-all"
+                      >
+                        <div className="flex items-center gap-4">
+                          {chore.status === "APPROVED" && (
+                            <CheckCircle className="w-6 h-6 text-green-600" />
+                          )}
+                          {chore.status === "SUBMITTED" && (
+                            <Clock className="w-6 h-6 text-yellow-600" />
+                          )}
+                          {chore.status === "PENDING" && (
+                            <div className="w-6 h-6 rounded-full border-2 border-muted" />
+                          )}
+                          <div>
+                            <h3 className="font-semibold">{chore.title}</h3>
+                            {chore.description && (
+                              <p className="text-sm text-muted-foreground">{chore.description}</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Badge className="bg-gradient-coin">
+                            <Star className="w-3 h-3 mr-1" />
+                            {Number(chore.token_reward).toFixed(0)}
+                          </Badge>
+                          {chore.status === "PENDING" && (
+                            <Button
+                              size="sm"
+                              onClick={() => handleSubmitChore(chore.id)}
+                            >
+                              Mark Done
+                            </Button>
+                          )}
+                          {chore.status === "SUBMITTED" && (
+                            <Badge variant="outline">Waiting for approval</Badge>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="coach">
+            <div className="max-w-3xl mx-auto h-[600px]">
+              <AICoach childAge={child?.age || undefined} />
             </div>
-          </CardContent>
-        </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
