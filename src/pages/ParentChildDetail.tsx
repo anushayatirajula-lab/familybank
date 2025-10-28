@@ -5,7 +5,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, CheckCircle, XCircle, Clock } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { ArrowLeft, CheckCircle, XCircle, Clock, Trash2 } from "lucide-react";
 import coinIcon from "@/assets/coin-icon.png";
 
 interface Chore {
@@ -158,6 +169,31 @@ const ParentChildDetail = () => {
     return balances.reduce((sum, b) => sum + Number(b.amount), 0);
   };
 
+  const handleDeleteChild = async () => {
+    try {
+      const { error } = await supabase
+        .from("children")
+        .delete()
+        .eq("id", childId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Child deleted",
+        description: `${child.name}'s profile has been removed.`,
+      });
+
+      navigate("/parent/dashboard");
+    } catch (error) {
+      console.error("Error deleting child:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete child profile.",
+      });
+    }
+  };
+
   const getJarColor = (jarType: string) => {
     const colors: Record<string, string> = {
       TOYS: "bg-jar-toys",
@@ -189,10 +225,34 @@ const ParentChildDetail = () => {
     <div className="min-h-screen bg-background">
       <header className="border-b bg-gradient-card">
         <div className="container mx-auto px-4 py-6">
-          <Button variant="ghost" onClick={() => navigate("/parent/dashboard")} className="mb-4">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Dashboard
-          </Button>
+          <div className="flex items-center justify-between mb-4">
+            <Button variant="ghost" onClick={() => navigate("/parent/dashboard")}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Dashboard
+            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm">
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete Child
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently delete {child.name}'s profile, including all their chores, balances, and transaction history. This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDeleteChild} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
           <h1 className="text-3xl font-bold">{child.name}'s Profile</h1>
           {child.age && <p className="text-muted-foreground">Age {child.age}</p>}
         </div>
