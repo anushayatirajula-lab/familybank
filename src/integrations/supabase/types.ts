@@ -95,7 +95,6 @@ export type Database = {
           name: string
           parent_id: string
           per_txn_limit: number | null
-          pin: string | null
           updated_at: string | null
           user_id: string | null
         }
@@ -109,7 +108,6 @@ export type Database = {
           name: string
           parent_id: string
           per_txn_limit?: number | null
-          pin?: string | null
           updated_at?: string | null
           user_id?: string | null
         }
@@ -123,7 +121,6 @@ export type Database = {
           name?: string
           parent_id?: string
           per_txn_limit?: number | null
-          pin?: string | null
           updated_at?: string | null
           user_id?: string | null
         }

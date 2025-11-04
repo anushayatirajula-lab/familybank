@@ -11,8 +11,8 @@ import coinIcon from "@/assets/coin-icon.png";
 const ChildAuth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [name, setName] = useState("");
-  const [pin, setPin] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -20,31 +20,17 @@ const ChildAuth = () => {
     setLoading(true);
 
     try {
-      // Convert name to email format used during signup
-      const childEmail = `${name.toLowerCase().replace(/\s+/g, '')}@familybank.local`;
-      const password = pin || '';
-
-      if (!password) {
-        toast({
-          variant: "destructive",
-          title: "PIN Required",
-          description: "Please enter your PIN to log in.",
-        });
-        setLoading(false);
-        return;
-      }
-
       // Sign in with Supabase auth
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: childEmail,
-        password: password,
+        email,
+        password,
       });
 
       if (authError) {
         toast({
           variant: "destructive",
           title: "Login Failed",
-          description: "Incorrect name or PIN. Please try again.",
+          description: "Incorrect email or password. Please try again.",
         });
         setLoading(false);
         return;
@@ -93,32 +79,31 @@ const ChildAuth = () => {
             <img src={coinIcon} alt="Coin" className="w-16 h-16 animate-bounce-subtle" />
           </div>
           <CardTitle className="text-2xl">Child Login</CardTitle>
-          <CardDescription>Enter your name and PIN to access your dashboard</CardDescription>
+          <CardDescription>Enter your login credentials to access your dashboard</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="text-sm font-medium mb-2 block">Your Name</label>
+              <label className="text-sm font-medium mb-2 block">Email</label>
               <Input
-                type="text"
-                placeholder="Enter your name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                type="email"
+                placeholder="your-login-email@familybank.local"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
             <div>
-              <label className="text-sm font-medium mb-2 block">PIN</label>
+              <label className="text-sm font-medium mb-2 block">Password</label>
               <Input
                 type="password"
-                placeholder="Enter your PIN"
-                value={pin}
-                onChange={(e) => setPin(e.target.value)}
-                maxLength={4}
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 required
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Use the 4-digit PIN your parent set for you
+                Use the credentials your parent shared with you
               </p>
             </div>
             <Button type="submit" className="w-full" disabled={loading}>

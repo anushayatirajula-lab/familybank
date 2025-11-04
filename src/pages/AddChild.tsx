@@ -17,7 +17,6 @@ const AddChild = () => {
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
-  const [pin, setPin] = useState("");
   const [jarPercentages, setJarPercentages] = useState({
     TOYS: 30,
     BOOKS: 20,
@@ -52,9 +51,9 @@ const AddChild = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Create auth account for child
+      // Generate secure credentials for child
       const childEmail = `${name.toLowerCase().replace(/\s+/g, '')}@familybank.local`;
-      const childPassword = pin || `child${Date.now()}`; // Use PIN or generate password
+      const childPassword = `child${Date.now()}${Math.random().toString(36)}`; // Secure random password
       
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: childEmail,
@@ -78,7 +77,6 @@ const AddChild = () => {
           user_id: authData.user.id,
           name,
           age: parseInt(age),
-          pin: pin || null,
         })
         .select()
         .single();
@@ -113,8 +111,8 @@ const AddChild = () => {
 
       toast({
         title: "Child added!",
-        description: `${name} has been added. Login: ${childEmail}, Password: ${childPassword === pin ? 'Their PIN' : 'Generated automatically'}`,
-        duration: 8000,
+        description: `${name} has been added. Login: ${childEmail}, Password: ${childPassword}`,
+        duration: 10000,
       });
 
       navigate("/parent/dashboard");
@@ -174,24 +172,10 @@ const AddChild = () => {
                   placeholder="Enter age"
                   required
                 />
+                <p className="text-sm text-muted-foreground">
+                  A secure login will be automatically generated for your child
+                </p>
               </div>
-
-            <div>
-              <Label htmlFor="pin">4-Digit PIN (Required)</Label>
-              <Input
-                id="pin"
-                type="password"
-                maxLength={4}
-                pattern="[0-9]{4}"
-                value={pin}
-                onChange={(e) => setPin(e.target.value.replace(/[^0-9]/g, ''))}
-                placeholder="Set a 4-digit PIN"
-                required
-              />
-              <p className="text-sm text-muted-foreground">
-                Your child will use this PIN to log in to their dashboard
-              </p>
-            </div>
 
               <div className="space-y-4">
                 <div>
