@@ -51,6 +51,10 @@ const AddChild = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      // Save parent session before creating child
+      const { data: { session: parentSession } } = await supabase.auth.getSession();
+      if (!parentSession) throw new Error("No active session");
+
       // Generate secure credentials for child
       const childEmail = `${name.toLowerCase().replace(/\s+/g, '')}@familybank.local`;
       const childPassword = `child${Date.now()}${Math.random().toString(36)}`; // Secure random password
@@ -68,6 +72,12 @@ const AddChild = () => {
 
       if (authError) throw authError;
       if (!authData.user) throw new Error("Failed to create child auth account");
+
+      // Restore parent session immediately
+      await supabase.auth.setSession({
+        access_token: parentSession.access_token,
+        refresh_token: parentSession.refresh_token
+      });
 
       // Create child profile
       const { data: child, error: childError } = await supabase
