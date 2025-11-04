@@ -2,3 +2,6 @@ project_id = "aervpdnvpepfruxjevxm"
 
 [functions.ai-coach]
 verify_jwt = false
+
+[functions.send-child-credentials]
+verify_jwt = false

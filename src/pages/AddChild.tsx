@@ -119,11 +119,38 @@ const AddChild = () => {
 
       if (balancesError) throw balancesError;
 
-      toast({
-        title: "Child added!",
-        description: `${name} has been added. Login: ${childEmail}, Password: ${childPassword}`,
-        duration: 10000,
-      });
+      // Send credentials email to parent
+      try {
+        const { error: emailError } = await supabase.functions.invoke('send-child-credentials', {
+          body: {
+            parentEmail: user.email,
+            childName: name,
+            childUserId: authData.user.id,
+            temporaryPassword: childPassword
+          }
+        });
+
+        if (emailError) {
+          console.error('Failed to send email:', emailError);
+          toast({
+            title: "Child added!",
+            description: `${name} has been added, but we couldn't send the email. User ID: ${authData.user.id}`,
+            duration: 10000,
+          });
+        } else {
+          toast({
+            title: "Child added!",
+            description: `${name} has been added. Login credentials have been sent to your email.`,
+          });
+        }
+      } catch (emailError) {
+        console.error('Email sending error:', emailError);
+        toast({
+          title: "Child added!",
+          description: `${name} has been added, but we couldn't send the email. User ID: ${authData.user.id}`,
+          duration: 10000,
+        });
+      }
 
       navigate("/parent/dashboard");
     } catch (error: any) {
