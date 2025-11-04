@@ -20,32 +20,59 @@ const ChildAuth = () => {
     setLoading(true);
 
     try {
-      // Use secure RPC function to authenticate child
-      const { data, error } = await supabase.rpc('authenticate_child', {
-        p_name: name,
-        p_pin: pin || ''
+      // Convert name to email format used during signup
+      const childEmail = `${name.toLowerCase().replace(/\s+/g, '')}@familybank.local`;
+      const password = pin || '';
+
+      if (!password) {
+        toast({
+          variant: "destructive",
+          title: "PIN Required",
+          description: "Please enter your PIN to log in.",
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Sign in with Supabase auth
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: childEmail,
+        password: password,
       });
 
-      if (error) throw error;
-
-      // The RPC returns an array with one result
-      const result = data?.[0];
-
-      if (!result?.success) {
+      if (authError) {
         toast({
           variant: "destructive",
           title: "Login Failed",
-          description: result?.message || "Failed to log in. Please try again.",
+          description: "Incorrect name or PIN. Please try again.",
         });
+        setLoading(false);
+        return;
+      }
+
+      // Get child profile
+      const { data: child, error: childError } = await supabase
+        .from("children")
+        .select("id, name")
+        .eq("user_id", authData.user.id)
+        .single();
+
+      if (childError || !child) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Could not find your profile. Please contact your parent.",
+        });
+        setLoading(false);
         return;
       }
 
       toast({
         title: "Welcome!",
-        description: `Hi ${result.child_name}! Let's check your progress.`,
+        description: `Hi ${child.name}! Let's check your progress.`,
       });
       
-      navigate(`/child/${result.child_id}`);
+      navigate(`/child/${child.id}`);
     } catch (error) {
       console.error("Error logging in:", error);
       toast({
@@ -81,14 +108,18 @@ const ChildAuth = () => {
               />
             </div>
             <div>
-              <label className="text-sm font-medium mb-2 block">PIN (if set)</label>
+              <label className="text-sm font-medium mb-2 block">PIN</label>
               <Input
                 type="password"
                 placeholder="Enter your PIN"
                 value={pin}
                 onChange={(e) => setPin(e.target.value)}
                 maxLength={4}
+                required
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                Use the 4-digit PIN your parent set for you
+              </p>
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Logging in..." : "Login"}

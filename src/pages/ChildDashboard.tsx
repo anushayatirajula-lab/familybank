@@ -35,24 +35,53 @@ const ChildDashboard = () => {
 
   useEffect(() => {
     if (childId) {
-      fetchChildData();
+      checkAuth();
       subscribeToUpdates();
     }
   }, [childId]);
 
-  const fetchChildData = async () => {
+  const checkAuth = async () => {
     try {
-      // Get child info
-      const { data: childData } = await supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          variant: "destructive",
+          title: "Not logged in",
+          description: "Please log in to view your dashboard.",
+        });
+        navigate("/child/login");
+        return;
+      }
+
+      // Verify the authenticated user matches this child
+      const { data: childData, error } = await supabase
         .from("children")
         .select("*")
         .eq("id", childId)
+        .eq("user_id", user.id)
         .single();
 
-      if (childData) {
-        setChild(childData);
+      if (error || !childData) {
+        toast({
+          variant: "destructive",
+          title: "Access Denied",
+          description: "You don't have permission to view this profile.",
+        });
+        navigate("/child/login");
+        return;
       }
 
+      setChild(childData);
+      await fetchChildData();
+    } catch (error) {
+      console.error("Auth error:", error);
+      navigate("/child/login");
+    }
+  };
+
+  const fetchChildData = async () => {
+    try {
       // Get chores
       const { data: choresData } = await supabase
         .from("chores")
@@ -184,7 +213,10 @@ const ChildDashboard = () => {
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Home
               </Button>
-              <Button variant="outline" onClick={() => navigate("/child/login")}>
+              <Button variant="outline" onClick={async () => {
+                await supabase.auth.signOut();
+                navigate("/child/login");
+              }}>
                 <LogOut className="mr-2 h-4 w-4" />
                 Logout
               </Button>

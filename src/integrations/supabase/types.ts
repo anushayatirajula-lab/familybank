@@ -97,6 +97,7 @@ export type Database = {
           per_txn_limit: number | null
           pin: string | null
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           age?: number | null
@@ -110,6 +111,7 @@ export type Database = {
           per_txn_limit?: number | null
           pin?: string | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           age?: number | null
@@ -123,6 +125,7 @@ export type Database = {
           per_txn_limit?: number | null
           pin?: string | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -348,10 +351,7 @@ export type Database = {
           success: boolean
         }[]
       }
-      fb_approve_chore: {
-        Args: { p_chore: string }
-        Returns: boolean
-      }
+      fb_approve_chore: { Args: { p_chore: string }; Returns: boolean }
       fb_split_into_jars: {
         Args: {
           p_amount: number
