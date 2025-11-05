@@ -28,9 +28,9 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`Sending child credentials email to ${parentEmail} for child ${childName}`);
 
     const emailResponse = await resend.emails.send({
-      from: "FamilyBank <noreply@anusha.org>",
+      from: "FamilyBank <onboarding@resend.dev>",
       to: [parentEmail],
-      subject: `Child Account Created: ${childName}`,
+      subject: "Your Child Account Has Been Created.",
       html: `
         <!DOCTYPE html>
         <html>
