@@ -25,8 +25,8 @@ const AddChild = () => {
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
   const [showCredentials, setShowCredentials] = useState(false);
-  const [credentials, setCredentials] = useState({ userId: "", password: "", childName: "" });
-  const [copiedUserId, setCopiedUserId] = useState(false);
+  const [credentials, setCredentials] = useState({ email: "", password: "", childName: "" });
+  const [copiedEmail, setCopiedEmail] = useState(false);
   const [copiedPassword, setCopiedPassword] = useState(false);
   const [jarPercentages, setJarPercentages] = useState({
     TOYS: 30,
@@ -36,18 +36,18 @@ const AddChild = () => {
     WISHLIST: 20,
   });
 
-  const copyToClipboard = async (text: string, type: 'userId' | 'password') => {
+  const copyToClipboard = async (text: string, type: 'email' | 'password') => {
     await navigator.clipboard.writeText(text);
-    if (type === 'userId') {
-      setCopiedUserId(true);
-      setTimeout(() => setCopiedUserId(false), 2000);
+    if (type === 'email') {
+      setCopiedEmail(true);
+      setTimeout(() => setCopiedEmail(false), 2000);
     } else {
       setCopiedPassword(true);
       setTimeout(() => setCopiedPassword(false), 2000);
     }
     toast({
       title: "Copied!",
-      description: `${type === 'userId' ? 'User ID' : 'Password'} copied to clipboard`,
+      description: `${type === 'email' ? 'Email' : 'Password'} copied to clipboard`,
     });
   };
 
@@ -82,7 +82,7 @@ const AddChild = () => {
       if (!parentSession) throw new Error("No active session");
 
       // Generate secure credentials for child
-      const childEmail = `${name.toLowerCase().replace(/\s+/g, '')}@familybank.local`;
+      const childEmail = `${name.toLowerCase().replace(/\s+/g, '')}@familybank.app`;
       const childPassword = `child${Date.now()}${Math.random().toString(36)}`; // Secure random password
       
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -147,7 +147,7 @@ const AddChild = () => {
 
       // Show credentials dialog
       setCredentials({
-        userId: authData.user.id,
+        email: childEmail,
         password: childPassword,
         childName: name
       });
@@ -184,10 +184,10 @@ const AddChild = () => {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label className="text-sm font-medium">User ID</Label>
+              <Label className="text-sm font-medium">Login Email</Label>
               <div className="flex items-center gap-2">
                 <Input
-                  value={credentials.userId}
+                  value={credentials.email}
                   readOnly
                   className="flex-1 font-mono text-sm"
                 />
@@ -195,9 +195,9 @@ const AddChild = () => {
                   type="button"
                   size="sm"
                   variant="outline"
-                  onClick={() => copyToClipboard(credentials.userId, 'userId')}
+                  onClick={() => copyToClipboard(credentials.email, 'email')}
                 >
-                  {copiedUserId ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  {copiedEmail ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
             </div>

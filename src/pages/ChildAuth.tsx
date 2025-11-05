@@ -86,8 +86,8 @@ const ChildAuth = () => {
             <div>
               <label className="text-sm font-medium mb-2 block">Email</label>
               <Input
-                type="email"
-                placeholder="your-login-email@familybank.local"
+                type="text"
+                placeholder="your-login-email@familybank.app"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
