@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,10 +11,13 @@ import { Loader2 } from "lucide-react";
 const UpdatePassword = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isChild, setIsChild] = useState(false);
+  const [childId, setChildId] = useState<string | null>(null);
+  const isFirstLogin = searchParams.get("first_login") === "true";
 
   useEffect(() => {
     // Check if user is authenticated
@@ -33,6 +36,17 @@ const UpdatePassword = () => {
         .then(({ data }) => {
           if (data?.role === "CHILD") {
             setIsChild(true);
+            // Get child ID for redirecting after password update
+            supabase
+              .from("children")
+              .select("id")
+              .eq("user_id", session.user.id)
+              .single()
+              .then(({ data: childData }) => {
+                if (childData) {
+                  setChildId(childData.id);
+                }
+              });
           }
         });
     });
@@ -68,6 +82,18 @@ const UpdatePassword = () => {
 
       if (error) throw error;
 
+      // If this is a child's first login, update the first_login flag
+      if (isFirstLogin && isChild && childId) {
+        const { error: updateError } = await supabase
+          .from("children")
+          .update({ first_login: false })
+          .eq("id", childId);
+
+        if (updateError) {
+          console.error("Error updating first_login flag:", updateError);
+        }
+      }
+
       toast({
         title: "Password updated!",
         description: "Your password has been changed successfully.",
@@ -75,7 +101,13 @@ const UpdatePassword = () => {
 
       // Redirect based on user role
       setTimeout(() => {
-        navigate(isChild ? "/child/dashboard" : "/parent/dashboard");
+        if (isChild && childId) {
+          navigate(`/child/${childId}`);
+        } else if (isChild) {
+          navigate("/child/login");
+        } else {
+          navigate("/parent/dashboard");
+        }
       }, 1500);
     } catch (error: any) {
       toast({
@@ -92,9 +124,14 @@ const UpdatePassword = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-hero p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-2xl">Set New Password</CardTitle>
+          <CardTitle className="text-2xl">
+            {isFirstLogin ? "Welcome! Set Your Password" : "Set New Password"}
+          </CardTitle>
           <CardDescription>
-            Choose a strong password for your account
+            {isFirstLogin 
+              ? "Create a strong password that you'll remember. This replaces your temporary password."
+              : "Choose a strong password for your account"
+            }
           </CardDescription>
         </CardHeader>
         <CardContent>

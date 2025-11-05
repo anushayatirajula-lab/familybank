@@ -91,6 +91,7 @@ export type Database = {
           avatar_url: string | null
           created_at: string | null
           daily_spend_limit: number | null
+          first_login: boolean | null
           id: string
           name: string
           parent_id: string
@@ -104,6 +105,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string | null
           daily_spend_limit?: number | null
+          first_login?: boolean | null
           id?: string
           name: string
           parent_id: string
@@ -117,6 +119,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string | null
           daily_spend_limit?: number | null
+          first_login?: boolean | null
           id?: string
           name?: string
           parent_id?: string
