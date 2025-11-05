@@ -109,6 +109,14 @@ const ChildAuth = () => {
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Logging in..." : "Login"}
             </Button>
+            <Button 
+              type="button" 
+              variant="link" 
+              className="w-full text-sm"
+              onClick={() => navigate("/reset-password")}
+            >
+              Forgot Password?
+            </Button>
             <Button
               type="button"
               variant="ghost"

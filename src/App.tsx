@@ -12,6 +12,8 @@ import CreateChore from "./pages/CreateChore";
 import NotFound from "./pages/NotFound";
 import ChildAuth from "./pages/ChildAuth";
 import ParentChildDetail from "./pages/ParentChildDetail";
+import ResetPassword from "./pages/ResetPassword";
+import UpdatePassword from "./pages/UpdatePassword";
 
 const queryClient = new QueryClient();
 
@@ -23,8 +25,11 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/auth" element={<Auth />} />
           <Route path="/auth/login" element={<Auth />} />
           <Route path="/auth/signup" element={<Auth />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/update-password" element={<UpdatePassword />} />
           <Route path="/parent/dashboard" element={<ParentDashboard />} />
           <Route path="/parent/children/new" element={<AddChild />} />
           <Route path="/parent/chores/new" element={<CreateChore />} />
