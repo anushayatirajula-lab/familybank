@@ -1,9 +1,46 @@
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles, TrendingUp, Award } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import heroImage from "@/assets/hero-family.jpg";
 
 const Index = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    checkAuthAndRedirect();
+  }, []);
+
+  const checkAuthAndRedirect = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) return; // Not logged in, show landing page
+
+    // Check if user is a parent
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (profile?.role === "PARENT") {
+      navigate("/parent/dashboard");
+      return;
+    }
+
+    // Check if user is a child
+    const { data: childData } = await supabase
+      .from("children")
+      .select("id")
+      .eq("user_id", user.id)
+      .single();
+
+    if (childData) {
+      navigate(`/child/${childData.id}`);
+    }
+  };
+
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
