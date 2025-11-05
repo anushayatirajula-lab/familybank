@@ -7,7 +7,14 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Copy, Check } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const JAR_TYPES = ["TOYS", "BOOKS", "SHOPPING", "CHARITY", "WISHLIST"];
 
@@ -17,6 +24,10 @@ const AddChild = () => {
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
+  const [showCredentials, setShowCredentials] = useState(false);
+  const [credentials, setCredentials] = useState({ userId: "", password: "", childName: "" });
+  const [copiedUserId, setCopiedUserId] = useState(false);
+  const [copiedPassword, setCopiedPassword] = useState(false);
   const [jarPercentages, setJarPercentages] = useState({
     TOYS: 30,
     BOOKS: 20,
@@ -24,6 +35,21 @@ const AddChild = () => {
     CHARITY: 10,
     WISHLIST: 20,
   });
+
+  const copyToClipboard = async (text: string, type: 'userId' | 'password') => {
+    await navigator.clipboard.writeText(text);
+    if (type === 'userId') {
+      setCopiedUserId(true);
+      setTimeout(() => setCopiedUserId(false), 2000);
+    } else {
+      setCopiedPassword(true);
+      setTimeout(() => setCopiedPassword(false), 2000);
+    }
+    toast({
+      title: "Copied!",
+      description: `${type === 'userId' ? 'User ID' : 'Password'} copied to clipboard`,
+    });
+  };
 
   const handlePercentageChange = (jar: string, value: number[]) => {
     setJarPercentages((prev) => ({ ...prev, [jar]: value[0] }));
@@ -119,40 +145,18 @@ const AddChild = () => {
 
       if (balancesError) throw balancesError;
 
-      // Send credentials email to parent
-      try {
-        const { error: emailError } = await supabase.functions.invoke('send-child-credentials', {
-          body: {
-            parentEmail: user.email,
-            childName: name,
-            childUserId: authData.user.id,
-            temporaryPassword: childPassword
-          }
-        });
+      // Show credentials dialog
+      setCredentials({
+        userId: authData.user.id,
+        password: childPassword,
+        childName: name
+      });
+      setShowCredentials(true);
 
-        if (emailError) {
-          console.error('Failed to send email:', emailError);
-          toast({
-            title: "Child added!",
-            description: `${name} has been added, but we couldn't send the email. User ID: ${authData.user.id}`,
-            duration: 10000,
-          });
-        } else {
-          toast({
-            title: "Child added!",
-            description: `${name} has been added. Login credentials have been sent to your email.`,
-          });
-        }
-      } catch (emailError) {
-        console.error('Email sending error:', emailError);
-        toast({
-          title: "Child added!",
-          description: `${name} has been added, but we couldn't send the email. User ID: ${authData.user.id}`,
-          duration: 10000,
-        });
-      }
-
-      navigate("/parent/dashboard");
+      toast({
+        title: "Child added!",
+        description: `${name} has been added successfully. Please save the login credentials.`,
+      });
     } catch (error: any) {
       console.error("Error adding child:", error);
       toast({
@@ -166,7 +170,71 @@ const AddChild = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <>
+      <Dialog open={showCredentials} onOpenChange={(open) => {
+        setShowCredentials(open);
+        if (!open) navigate("/parent/dashboard");
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Child Account Created!</DialogTitle>
+            <DialogDescription>
+              Save these credentials to share with {credentials.childName}. They will need these to log in.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">User ID</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  value={credentials.userId}
+                  readOnly
+                  className="flex-1 font-mono text-sm"
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => copyToClipboard(credentials.userId, 'userId')}
+                >
+                  {copiedUserId ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Temporary Password</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  value={credentials.password}
+                  readOnly
+                  className="flex-1 font-mono text-sm"
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => copyToClipboard(credentials.password, 'password')}
+                >
+                  {copiedPassword ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+            <div className="rounded-lg bg-amber-50 dark:bg-amber-950 p-4 border border-amber-200 dark:border-amber-800">
+              <p className="text-sm text-amber-900 dark:text-amber-100">
+                ⚠️ <strong>Important:</strong> Make sure to save these credentials. Both you and your child should reset the password upon first login.
+              </p>
+            </div>
+            <Button onClick={() => {
+              setShowCredentials(false);
+              navigate("/parent/dashboard");
+            }} className="w-full">
+              Done - Go to Dashboard
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <div className="min-h-screen bg-background">
       <header className="border-b">
         <div className="container mx-auto px-4 py-4">
           <Button variant="ghost" onClick={() => navigate("/parent/dashboard")}>
@@ -254,6 +322,7 @@ const AddChild = () => {
         </Card>
       </div>
     </div>
+    </>
   );
 };
 
