@@ -324,7 +324,7 @@ const ChildDashboard = () => {
 
           <TabsContent value="coach">
             <div className="max-w-3xl mx-auto h-[600px]">
-              <AICoach childAge={child?.age || undefined} />
+              <AICoach childAge={child?.age || undefined} childId={childId!} />
             </div>
           </TabsContent>
         </Tabs>

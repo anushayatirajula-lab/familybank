@@ -29,10 +29,10 @@ const UpdatePassword = () => {
 
       // Check if this is a child account
       supabase
-        .from("profiles")
+        .from("user_roles")
         .select("role")
-        .eq("id", session.user.id)
-        .single()
+        .eq("user_id", session.user.id)
+        .maybeSingle()
         .then(({ data }) => {
           if (data?.role === "CHILD") {
             setIsChild(true);

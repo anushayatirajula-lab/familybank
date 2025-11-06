@@ -18,13 +18,13 @@ const Index = () => {
     if (!user) return; // Not logged in, show landing page
 
     // Check if user is a parent
-    const { data: profile } = await supabase
-      .from("profiles")
+    const { data: userRole } = await supabase
+      .from("user_roles")
       .select("role")
-      .eq("id", user.id)
-      .single();
+      .eq("user_id", user.id)
+      .maybeSingle();
 
-    if (profile?.role === "PARENT") {
+    if (userRole?.role === "PARENT") {
       navigate("/parent/dashboard");
       return;
     }

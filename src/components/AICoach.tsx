@@ -14,9 +14,10 @@ interface Message {
 
 interface AICoachProps {
   childAge?: number;
+  childId: string;
 }
 
-const AICoach = ({ childAge }: AICoachProps) => {
+const AICoach = ({ childAge, childId }: AICoachProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -48,6 +49,7 @@ const AICoach = ({ childAge }: AICoachProps) => {
           messages: newMessages,
           childAge: childAge || 10,
           mode: mode,
+          childId: childId,
         },
       });
 
