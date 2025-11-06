@@ -34,10 +34,10 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    // Create Supabase client with user's auth token
+    // Create Supabase client with service role key to validate user JWT
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
       { global: { headers: { Authorization: authHeader } } }
     );
 
