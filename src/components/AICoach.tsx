@@ -79,7 +79,7 @@ const AICoach = ({ childAge }: AICoachProps) => {
   const startLesson = () => {
     setMode("lesson");
     setMessages([]);
-    sendMessage("Hi! I want to learn about saving money.");
+    sendMessage("I'm ready to learn something new about money!");
   };
 
   const startQuiz = () => {
