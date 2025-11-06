@@ -91,7 +91,11 @@ const ParentDashboard = () => {
         .eq("parent_id", user.id);
 
       if (childrenData) {
-        setChildren(childrenData);
+        // Sort children alphabetically by name
+        const sortedChildren = childrenData.sort((a, b) => 
+          a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+        );
+        setChildren(sortedChildren);
       }
     } catch (error) {
       console.error("Error fetching dashboard:", error);

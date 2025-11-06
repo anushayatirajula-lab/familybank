@@ -40,7 +40,11 @@ const CreateChore = () => {
         .eq("parent_id", user.id);
 
       if (data) {
-        setChildren(data);
+        // Sort children alphabetically by name
+        const sortedChildren = data.sort((a, b) => 
+          a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+        );
+        setChildren(sortedChildren);
       }
     } catch (error) {
       console.error("Error fetching children:", error);
