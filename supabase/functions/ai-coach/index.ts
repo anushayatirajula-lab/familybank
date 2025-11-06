@@ -1,5 +1,5 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { z } from 'https://esm.sh/zod@3.23.8';
 
@@ -34,15 +34,38 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    // Create Supabase client with service role key to validate user JWT
+    // Create Supabase client with user's auth token
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
+    
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error('Missing Supabase configuration', { 
+        hasUrl: !!supabaseUrl, 
+        hasAnonKey: !!supabaseAnonKey 
+      });
+      return new Response(JSON.stringify({ error: 'Server configuration error' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
     const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      supabaseUrl,
+      supabaseAnonKey,
       { global: { headers: { Authorization: authHeader } } }
     );
 
     // Get authenticated user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    if (userError) {
+      console.error('Auth error details:', { 
+        error: userError.message,
+        status: userError.status,
+        hasAuthHeader: !!authHeader 
+      });
+    }
+    
     if (userError || !user) {
       return new Response(JSON.stringify({ error: 'Invalid authentication token' }), {
         status: 401,
