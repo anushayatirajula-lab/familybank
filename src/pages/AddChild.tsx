@@ -91,7 +91,7 @@ const AddChild = () => {
         options: {
           data: {
             display_name: name,
-            role: 'child'
+            role: 'CHILD'
           }
         }
       });
