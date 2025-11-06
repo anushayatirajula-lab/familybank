@@ -25,7 +25,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    // Verify authentication
+    // Verify authentication - JWT is already validated by gateway when verify_jwt = true
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(JSON.stringify({ error: 'Unauthorized - Authentication required' }), {
@@ -34,44 +34,39 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    // Create Supabase client with service role (JWT already verified by gateway)
+    // Extract user ID from JWT token (already validated by gateway)
+    const token = authHeader.replace('Bearer ', '');
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      return new Response(JSON.stringify({ error: 'Invalid token format' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    const payload = JSON.parse(atob(parts[1]));
+    const userId = payload.sub;
+    
+    if (!userId) {
+      return new Response(JSON.stringify({ error: 'Invalid token payload' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Create Supabase client with service role for database queries
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
     if (!supabaseUrl || !supabaseServiceKey) {
-      console.error('Missing Supabase configuration', { 
-        hasUrl: !!supabaseUrl, 
-        hasServiceKey: !!supabaseServiceKey 
-      });
+      console.error('Missing Supabase configuration');
       return new Response(JSON.stringify({ error: 'Server configuration error' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
     
-    const supabase = createClient(
-      supabaseUrl,
-      supabaseServiceKey,
-      { global: { headers: { Authorization: authHeader } } }
-    );
-
-    // Get authenticated user
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    
-    if (userError) {
-      console.error('Auth error details:', { 
-        error: userError.message,
-        status: userError.status,
-        hasAuthHeader: !!authHeader 
-      });
-    }
-    
-    if (userError || !user) {
-      return new Response(JSON.stringify({ error: 'Invalid authentication token' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Parse and validate request body
     const body = await req.json();
@@ -105,7 +100,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Check authorization: user must be either the parent or the child themselves
-    if (child.parent_id !== user.id && child.user_id !== user.id) {
+    if (child.parent_id !== userId && child.user_id !== userId) {
       return new Response(JSON.stringify({ error: 'Unauthorized - You do not have access to this child' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
