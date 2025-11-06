@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { z } from 'npm:zod@3.25.76';
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -10,11 +11,22 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-interface EmailRequest {
-  parentEmail: string;
-  childName: string;
-  childUserId: string;
-  temporaryPassword: string;
+// Validation schema
+const emailRequestSchema = z.object({
+  parentEmail: z.string().email().max(255),
+  childName: z.string().trim().min(1).max(100),
+  childUserId: z.string().uuid(),
+  temporaryPassword: z.string().min(8).max(100)
+});
+
+// HTML escape function to prevent XSS
+function escapeHtml(unsafe: string): string {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -51,7 +63,22 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    const { parentEmail, childName, childUserId, temporaryPassword }: EmailRequest = await req.json();
+    // Parse and validate request body
+    const body = await req.json();
+    const validationResult = emailRequestSchema.safeParse(body);
+    
+    if (!validationResult.success) {
+      console.error('Validation error:', validationResult.error);
+      return new Response(JSON.stringify({ 
+        error: 'Invalid input data',
+        details: validationResult.error.errors 
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const { parentEmail, childName, childUserId, temporaryPassword } = validationResult.data;
 
     // Verify the child belongs to this parent
     const { data: child, error: childError } = await supabase
@@ -78,10 +105,15 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('Sending child credentials email (email address redacted for security)');
 
+    // Escape all user-controlled variables for HTML
+    const safeChildName = escapeHtml(childName);
+    const safeChildUserId = escapeHtml(childUserId);
+    const safeTemporaryPassword = escapeHtml(temporaryPassword);
+
     const emailResponse = await resend.emails.send({
       from: "FamilyBank <onboarding@resend.dev>",
       to: [parentEmail],
-      subject: `Login Credentials for ${childName}`,
+      subject: `Login Credentials for ${safeChildName}`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -103,26 +135,26 @@ const handler = async (req: Request): Promise<Response> => {
               </div>
               <div class="content">
                 <p>Hi!</p>
-                <p>Great news! You've successfully created a FamilyBank account for <strong>${childName}</strong>. Here are the login credentials:</p>
+                <p>Great news! You've successfully created a FamilyBank account for <strong>${safeChildName}</strong>. Here are the login credentials:</p>
                 
                 <div class="credentials">
-                  <p><strong>📧 Email:</strong> ${childUserId}@familybank.app</p>
-                  <p><strong>🔑 Temporary Password:</strong> ${temporaryPassword}</p>
+                  <p><strong>📧 Email:</strong> ${safeChildUserId}@familybank.app</p>
+                  <p><strong>🔑 Temporary Password:</strong> ${safeTemporaryPassword}</p>
                 </div>
 
                 <div class="warning">
                   <p><strong>⚠️ Important Security Information:</strong></p>
                   <ul>
-                    <li><strong>${childName} will be required to change this password</strong> on their first login</li>
-                    <li>Please share these credentials with ${childName} in a secure way</li>
+                    <li><strong>${safeChildName} will be required to change this password</strong> on their first login</li>
+                    <li>Please share these credentials with ${safeChildName} in a secure way</li>
                     <li>Do not share this email with anyone else</li>
-                    <li>After ${childName} has logged in and changed their password, please delete this email</li>
+                    <li>After ${safeChildName} has logged in and changed their password, please delete this email</li>
                   </ul>
                 </div>
 
                 <p><strong>Next Steps:</strong></p>
                 <ol>
-                  <li>Share the login credentials with ${childName}</li>
+                  <li>Share the login credentials with ${safeChildName}</li>
                   <li>Have them visit the FamilyBank child login page</li>
                   <li>They'll be prompted to create their own secure password</li>
                   <li>Then they can start exploring their dashboard!</li>

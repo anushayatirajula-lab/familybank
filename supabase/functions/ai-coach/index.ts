@@ -1,11 +1,23 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { z } from 'npm:zod@3.25.76';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Validation schema
+const aiCoachRequestSchema = z.object({
+  messages: z.array(z.object({
+    role: z.enum(['user', 'assistant', 'system']),
+    content: z.string().min(1).max(1000)
+  })).min(1).max(50),
+  childAge: z.number().int().min(4).max(18),
+  mode: z.enum(['lesson', 'quiz', 'chat']),
+  childId: z.string().uuid()
+});
 
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === 'OPTIONS') {
@@ -38,7 +50,22 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    const { messages, childAge, mode, childId } = await req.json();
+    // Parse and validate request body
+    const body = await req.json();
+    const validationResult = aiCoachRequestSchema.safeParse(body);
+    
+    if (!validationResult.success) {
+      console.error('Validation error:', validationResult.error);
+      return new Response(JSON.stringify({ 
+        error: 'Invalid input data',
+        details: validationResult.error.errors 
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const { messages, childAge, mode, childId } = validationResult.data;
 
     // Verify the child belongs to this user (either they are the parent or the child)
     const { data: child, error: childError } = await supabase
@@ -76,9 +103,8 @@ const handler = async (req: Request): Promise<Response> => {
     if (mode === "lesson") {
       // Age-appropriate lesson topics
       let ageGuidance = "";
-      const age = childAge || 10;
       
-      if (age <= 8) {
+      if (childAge <= 8) {
         ageGuidance = `
 AGE 6-8 FOCUS: Basic money concepts
 - Counting coins and simple math
@@ -88,7 +114,7 @@ AGE 6-8 FOCUS: Basic money concepts
 - Sharing and helping others
 - Where money comes from (parents work)
 Choose ONE of these topics that hasn't been covered yet in the conversation.`;
-      } else if (age <= 11) {
+      } else if (childAge <= 11) {
         ageGuidance = `
 AGE 9-11 FOCUS: Building habits
 - Setting savings goals
@@ -111,7 +137,7 @@ AGE 12+ FOCUS: Financial responsibility
 Choose ONE of these topics that hasn't been covered yet in the conversation.`;
       }
 
-      systemPrompt = `You are FamilyBank Coach, a friendly financial literacy teacher for a ${age}-year-old child.
+      systemPrompt = `You are FamilyBank Coach, a friendly financial literacy teacher for a ${childAge}-year-old child.
 
 ${ageGuidance}
 
@@ -130,7 +156,7 @@ RULES:
 - If asked complex questions, say "Great question! Ask your parent about that."
 - Vary topics - don't repeat the same lesson twice`;
     } else if (mode === "quiz") {
-      systemPrompt = `You are FamilyBank Coach creating a simple quiz for a child aged ${childAge || "6-12"}.
+      systemPrompt = `You are FamilyBank Coach creating a simple quiz for a child aged ${childAge}.
 
 RULES:
 - Ask ONE question at a time
@@ -141,7 +167,7 @@ RULES:
 - Give lots of praise for trying!
 - After 3 questions, say "Great job! You earned a gold star! 🌟"`;
     } else {
-      systemPrompt = `You are FamilyBank Coach, a helpful friend teaching kids aged ${childAge || "6-12"} about money.
+      systemPrompt = `You are FamilyBank Coach, a helpful friend teaching kids aged ${childAge} about money.
 
 RULES:
 - Keep answers SHORT (2-3 sentences)
