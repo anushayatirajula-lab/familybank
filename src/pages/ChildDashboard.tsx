@@ -54,6 +54,24 @@ const ChildDashboard = () => {
         return;
       }
 
+      // Check if user has CHILD role
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      // If user is a parent, redirect to parent dashboard
+      if (roleData?.role !== "CHILD") {
+        toast({
+          variant: "destructive",
+          title: "Access Denied",
+          description: "Please use the parent dashboard to manage your children.",
+        });
+        navigate("/parent/dashboard");
+        return;
+      }
+
       // Verify the authenticated user matches this child
       const { data: childData, error } = await supabase
         .from("children")

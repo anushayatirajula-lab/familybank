@@ -40,7 +40,28 @@ const ParentDashboard = () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       navigate("/auth/login");
+      return;
     }
+
+    // Check if user has PARENT role
+    const { data: roleData } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", session.user.id)
+      .maybeSingle();
+
+    // If user has CHILD role, redirect to child login
+    if (roleData?.role === "CHILD") {
+      toast({
+        variant: "destructive",
+        title: "Access Denied",
+        description: "Please use the child login to access your dashboard.",
+      });
+      navigate("/child/login");
+      return;
+    }
+
+    // If no role found, assume parent (for backward compatibility with existing users)
   };
 
   const fetchDashboardData = async () => {
