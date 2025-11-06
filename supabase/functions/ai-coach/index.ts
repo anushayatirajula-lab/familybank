@@ -34,14 +34,14 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    // Create Supabase client with user's auth token
+    // Create Supabase client with service role (JWT already verified by gateway)
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
-    if (!supabaseUrl || !supabaseAnonKey) {
+    if (!supabaseUrl || !supabaseServiceKey) {
       console.error('Missing Supabase configuration', { 
         hasUrl: !!supabaseUrl, 
-        hasAnonKey: !!supabaseAnonKey 
+        hasServiceKey: !!supabaseServiceKey 
       });
       return new Response(JSON.stringify({ error: 'Server configuration error' }), {
         status: 500,
@@ -51,7 +51,7 @@ const handler = async (req: Request): Promise<Response> => {
     
     const supabase = createClient(
       supabaseUrl,
-      supabaseAnonKey,
+      supabaseServiceKey,
       { global: { headers: { Authorization: authHeader } } }
     );
 
