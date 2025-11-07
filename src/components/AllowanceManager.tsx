@@ -50,6 +50,14 @@ export const AllowanceManager = ({ childId, childName }: AllowanceManagerProps) 
   const [amount, setAmount] = useState("");
   const [dayOfWeek, setDayOfWeek] = useState("1");
 
+  const tokensToMoney = (tokens: number) => {
+    return (tokens / 10).toFixed(2);
+  };
+
+  const moneyToTokens = (money: number) => {
+    return money * 10;
+  };
+
   useEffect(() => {
     fetchAllowances();
   }, [childId]);
@@ -103,9 +111,10 @@ export const AllowanceManager = ({ childId, childName }: AllowanceManagerProps) 
     }
 
     try {
+      const tokens = moneyToTokens(parseFloat(amount));
       const allowanceData = {
         child_id: childId,
-        weekly_amount: parseFloat(amount),
+        weekly_amount: tokens,
         day_of_week: parseInt(dayOfWeek),
         next_payment_at: calculateNextPaymentDate(parseInt(dayOfWeek)),
         is_active: true,
@@ -152,7 +161,7 @@ export const AllowanceManager = ({ childId, childName }: AllowanceManagerProps) 
 
   const handleEdit = (allowance: Allowance) => {
     setEditingId(allowance.id);
-    setAmount(allowance.weekly_amount.toString());
+    setAmount(tokensToMoney(allowance.weekly_amount));
     setDayOfWeek(allowance.day_of_week.toString());
   };
 
@@ -204,16 +213,21 @@ export const AllowanceManager = ({ childId, childName }: AllowanceManagerProps) 
         <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="amount">Weekly Amount (tokens)</Label>
+              <Label htmlFor="amount">Weekly Amount ($)</Label>
               <Input
                 id="amount"
                 type="number"
                 step="0.01"
                 min="0"
-                placeholder="Enter amount"
+                placeholder="Enter amount in dollars"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
               />
+              {amount && parseFloat(amount) > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  = {moneyToTokens(parseFloat(amount)).toFixed(0)} tokens
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="day">Payment Day</Label>
@@ -258,14 +272,14 @@ export const AllowanceManager = ({ childId, childName }: AllowanceManagerProps) 
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="font-semibold">
-                      {allowance.weekly_amount.toFixed(2)} tokens
+                      ${tokensToMoney(allowance.weekly_amount)}
                     </span>
                     <span className="text-sm text-muted-foreground">
                       • Every {DAYS_OF_WEEK.find((d) => d.value === allowance.day_of_week)?.label}
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Next payment: {new Date(allowance.next_payment_at).toLocaleDateString()}
+                    {allowance.weekly_amount.toFixed(0)} tokens • Next: {new Date(allowance.next_payment_at).toLocaleDateString()}
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -286,7 +300,7 @@ export const AllowanceManager = ({ childId, childName }: AllowanceManagerProps) 
                       <AlertDialogHeader>
                         <AlertDialogTitle>Delete Allowance?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This will stop the weekly allowance of {allowance.weekly_amount.toFixed(2)} tokens for {childName}.
+                          This will stop the weekly allowance of ${tokensToMoney(allowance.weekly_amount)} ({allowance.weekly_amount.toFixed(0)} tokens) for {childName}.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>

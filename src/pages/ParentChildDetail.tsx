@@ -171,6 +171,10 @@ const ParentChildDetail = () => {
     return balances.reduce((sum, b) => sum + Number(b.amount), 0);
   };
 
+  const tokensToMoney = (tokens: number) => {
+    return (tokens / 10).toFixed(2);
+  };
+
   const handleDeleteChild = async () => {
     try {
       const { error } = await supabase
@@ -270,16 +274,20 @@ const ParentChildDetail = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-5xl font-bold mb-6">{getTotalBalance().toFixed(2)} tokens</p>
+            <p className="text-5xl font-bold mb-2">${tokensToMoney(getTotalBalance())}</p>
+            <p className="text-sm text-muted-foreground mb-6">{getTotalBalance().toFixed(0)} tokens</p>
             
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               {balances.map((balance) => (
                 <div key={balance.jar_type} className="text-center">
                   <div className={`w-full h-16 rounded-lg ${getJarColor(balance.jar_type)} mb-2 flex items-center justify-center text-white font-bold`}>
-                    {Number(balance.amount).toFixed(0)}
+                    ${tokensToMoney(Number(balance.amount))}
                   </div>
                   <p className="text-xs text-muted-foreground capitalize">
                     {balance.jar_type.toLowerCase()}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {Number(balance.amount).toFixed(0)} tokens
                   </p>
                 </div>
               ))}
@@ -335,7 +343,7 @@ const ParentChildDetail = () => {
                       )}
                       <div className="flex items-center gap-4 mt-2 ml-8">
                         <Badge className="bg-gradient-coin">
-                          {Number(chore.token_reward).toFixed(0)} tokens
+                          ${tokensToMoney(Number(chore.token_reward))}
                         </Badge>
                         <Badge variant="outline">{chore.status}</Badge>
                       </div>

@@ -21,12 +21,18 @@ interface WishlistItem {
   created_at: string | null;
 }
 
+interface Balance {
+  jar_type: string;
+  amount: number;
+}
+
 export default function ChildWishlist() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [childId, setChildId] = useState<string | null>(null);
   const [items, setItems] = useState<WishlistItem[]>([]);
+  const [wishlistBalance, setWishlistBalance] = useState(0);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<WishlistItem | null>(null);
   const [formData, setFormData] = useState({
@@ -34,6 +40,14 @@ export default function ChildWishlist() {
     description: "",
     target_amount: "",
   });
+
+  const tokensToMoney = (tokens: number) => {
+    return (tokens / 10).toFixed(2);
+  };
+
+  const moneyToTokens = (money: number) => {
+    return money * 10;
+  };
 
   useEffect(() => {
     loadChildData();
@@ -55,6 +69,17 @@ export default function ChildWishlist() {
 
       if (childError) throw childError;
       setChildId(child.id);
+
+      // Load WISHLIST balance
+      const { data: balance, error: balanceError } = await supabase
+        .from("balances")
+        .select("amount")
+        .eq("child_id", child.id)
+        .eq("jar_type", "WISHLIST")
+        .single();
+
+      if (balanceError) throw balanceError;
+      setWishlistBalance(balance?.amount || 0);
 
       await loadWishlistItems(child.id);
     } catch (error: any) {
@@ -84,8 +109,8 @@ export default function ChildWishlist() {
     if (!childId) return;
 
     try {
-      const amount = parseFloat(formData.target_amount);
-      if (isNaN(amount) || amount <= 0) {
+      const money = parseFloat(formData.target_amount);
+      if (isNaN(money) || money <= 0) {
         toast({
           title: "Invalid amount",
           description: "Please enter a valid price",
@@ -94,13 +119,15 @@ export default function ChildWishlist() {
         return;
       }
 
+      const tokens = moneyToTokens(money);
+
       if (editingItem) {
         const { error } = await supabase
           .from("wishlist_items")
           .update({
             title: formData.title,
             description: formData.description,
-            target_amount: amount,
+            target_amount: tokens,
           })
           .eq("id", editingItem.id);
 
@@ -113,7 +140,7 @@ export default function ChildWishlist() {
             child_id: childId,
             title: formData.title,
             description: formData.description,
-            target_amount: amount,
+            target_amount: tokens,
           });
 
         if (error) throw error;
@@ -157,7 +184,7 @@ export default function ChildWishlist() {
     setFormData({
       title: item.title,
       description: item.description || "",
-      target_amount: item.target_amount.toString(),
+      target_amount: tokensToMoney(item.target_amount),
     });
     setIsAddDialogOpen(true);
   };
@@ -192,7 +219,7 @@ export default function ChildWishlist() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-4xl font-bold text-foreground mb-2">My Wishlist</h1>
-            <p className="text-muted-foreground">Add items you want to save up for</p>
+            <p className="text-muted-foreground">You have ${tokensToMoney(wishlistBalance)} saved in your WISHLIST jar</p>
           </div>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
@@ -279,30 +306,49 @@ export default function ChildWishlist() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-2xl font-bold text-primary">
-                        ${item.target_amount.toFixed(2)}
-                      </p>
-                    </div>
-                    {!item.approved_by_parent && !item.is_purchased && (
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openEditDialog(item)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDelete(item.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-2xl font-bold text-primary">
+                          ${tokensToMoney(item.target_amount)}
+                        </p>
+                        {!item.approved_by_parent && !item.is_purchased && (
+                          <>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              Saved: ${tokensToMoney(wishlistBalance)}
+                            </p>
+                            {wishlistBalance < item.target_amount && (
+                              <p className="text-sm text-amber-600 mt-1">
+                                Need ${tokensToMoney(item.target_amount - wishlistBalance)} more
+                              </p>
+                            )}
+                            {wishlistBalance >= item.target_amount && (
+                              <p className="text-sm text-green-600 mt-1">
+                                ✓ You've saved enough!
+                              </p>
+                            )}
+                          </>
+                        )}
                       </div>
-                    )}
+                      {!item.approved_by_parent && !item.is_purchased && (
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openEditDialog(item)}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDelete(item.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>

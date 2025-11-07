@@ -25,6 +25,10 @@ const CreateChore = () => {
   const [description, setDescription] = useState("");
   const [tokenReward, setTokenReward] = useState("");
 
+  const moneyToTokens = (money: number) => {
+    return money * 10;
+  };
+
   useEffect(() => {
     fetchChildren();
   }, []);
@@ -65,13 +69,16 @@ const CreateChore = () => {
     setLoading(true);
 
     try {
+      const money = parseFloat(tokenReward);
+      const tokens = moneyToTokens(money);
+      
       const { error } = await supabase
         .from("chores")
         .insert({
           child_id: selectedChild,
           title,
           description: description || null,
-          token_reward: parseFloat(tokenReward),
+          token_reward: tokens,
           status: "PENDING",
         });
 
@@ -155,7 +162,7 @@ const CreateChore = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="reward">Token Reward *</Label>
+                <Label htmlFor="reward">Reward Amount ($) *</Label>
                 <Input
                   id="reward"
                   type="number"
@@ -163,9 +170,14 @@ const CreateChore = () => {
                   step="0.01"
                   value={tokenReward}
                   onChange={(e) => setTokenReward(e.target.value)}
-                  placeholder="10"
+                  placeholder="5.00"
                   required
                 />
+                {tokenReward && parseFloat(tokenReward) > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    = {moneyToTokens(parseFloat(tokenReward)).toFixed(0)} tokens
+                  </p>
+                )}
                 <p className="text-sm text-muted-foreground">
                   Tokens will be automatically split into jars when approved
                 </p>
