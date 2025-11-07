@@ -313,7 +313,7 @@ export default function ChildWishlist() {
         <Button
           variant="outline"
           className="mt-6"
-          onClick={() => navigate("/child-dashboard")}
+          onClick={() => navigate(`/child/${childId}`)}
         >
           Back to Dashboard
         </Button>
