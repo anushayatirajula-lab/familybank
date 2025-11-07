@@ -81,9 +81,9 @@ const AddChild = () => {
       const { data: { session: parentSession } } = await supabase.auth.getSession();
       if (!parentSession) throw new Error("No active session");
 
-      // Generate secure credentials for child with parent ID for uniqueness
-      const parentIdShort = user.id.substring(0, 8);
-      const childEmail = `${name.toLowerCase().replace(/\s+/g, '')}.${parentIdShort}@familybank.app`;
+      // Generate secure credentials for child with simple 4-digit code
+      const uniqueCode = Math.floor(1000 + Math.random() * 9000); // 4-digit code
+      const childEmail = `${name.toLowerCase().replace(/\s+/g, '')}.${uniqueCode}@familybank.app`;
       const childPassword = `child${Date.now()}${Math.random().toString(36)}`; // Secure random password
       
       const { data: authData, error: authError } = await supabase.auth.signUp({
