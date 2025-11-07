@@ -316,7 +316,7 @@ const ParentDashboard = () => {
                   </div>
 
                   {/* View Credentials Button */}
-                  {child.user_id && child.initial_password && (
+                  {child.user_id && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -364,21 +364,27 @@ const ParentDashboard = () => {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Password</label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  readOnly
-                  value={credentialsDialog.child?.initial_password || ""}
-                  className="flex-1 px-3 py-2 border rounded-md bg-muted font-mono"
-                />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => copyToClipboard(credentialsDialog.child?.initial_password || "", "Password")}
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
-              </div>
+              {credentialsDialog.child?.initial_password ? (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={credentialsDialog.child.initial_password}
+                    className="flex-1 px-3 py-2 border rounded-md bg-muted font-mono"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => copyToClipboard(credentialsDialog.child?.initial_password || "", "Password")}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground p-3 bg-muted rounded-md">
+                  Password not available. This child was created before credential storage was enabled.
+                </p>
+              )}
             </div>
             <div className="rounded-lg bg-amber-50 dark:bg-amber-950 p-4 border border-amber-200 dark:border-amber-800">
               <p className="text-sm text-amber-900 dark:text-amber-100">
