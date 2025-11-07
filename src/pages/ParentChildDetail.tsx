@@ -19,6 +19,7 @@ import {
 import { ArrowLeft, CheckCircle, XCircle, Clock, Trash2 } from "lucide-react";
 import coinIcon from "@/assets/coin-icon.png";
 import { AllowanceManager } from "@/components/AllowanceManager";
+import WishlistApprovalQueue from "@/components/WishlistApprovalQueue";
 
 interface Chore {
   id: string;
@@ -288,6 +289,16 @@ const ParentChildDetail = () => {
 
         {/* Weekly Allowance */}
         <AllowanceManager childId={childId!} childName={child.name} />
+
+        {/* Wishlist Approval Queue */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Wishlist Approval Queue</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <WishlistApprovalQueue childId={childId} />
+          </CardContent>
+        </Card>
 
         {/* Chores Management */}
         <Card>

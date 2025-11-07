@@ -245,9 +245,10 @@ const ChildDashboard = () => {
 
       <div className="container mx-auto px-4 py-8">
         <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="chores">Chores</TabsTrigger>
+            <TabsTrigger value="wishlist">Wishlist</TabsTrigger>
             <TabsTrigger value="coach">AI Coach</TabsTrigger>
           </TabsList>
 
@@ -336,6 +337,20 @@ const ChildDashboard = () => {
                     ))
                   )}
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="wishlist">
+            <Card>
+              <CardHeader>
+                <CardTitle>My Wishlist</CardTitle>
+                <CardDescription>Items you're saving up for</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button onClick={() => navigate("/child-wishlist")}>
+                  View My Wishlist
+                </Button>
               </CardContent>
             </Card>
           </TabsContent>
