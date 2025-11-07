@@ -1,13 +1,33 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.74.0";
-import { Resend } from "npm:resend@2.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY") as string);
+// Resend API helper
+async function sendEmail(apiKey: string, to: string, subject: string, html: string) {
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      from: "FamilyBank <onboarding@resend.dev>",
+      to: [to],
+      subject,
+      html,
+    }),
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Failed to send email: ${await response.text()}`);
+  }
+  
+  return response.json();
+}
 
 interface Allowance {
   id: string;
@@ -148,20 +168,22 @@ serve(async (req) => {
     // Send email notifications to parents
     console.log(`Sending ${notifications.length} email notifications...`);
     
+    const resendApiKey = Deno.env.get("RESEND_API_KEY") as string;
+    
     for (const notification of notifications) {
       try {
-        await resend.emails.send({
-          from: "FamilyBank <onboarding@resend.dev>",
-          to: [notification.parentEmail],
-          subject: "Weekly Allowance Paid",
-          html: `
+        await sendEmail(
+          resendApiKey,
+          notification.parentEmail,
+          "Weekly Allowance Paid",
+          `
             <h2>Weekly Allowance Processed</h2>
             <p>Hello!</p>
             <p>The weekly allowance of <strong>${notification.amount.toFixed(2)} tokens</strong> has been automatically paid to <strong>${notification.childName}</strong>.</p>
             <p>The tokens have been distributed across their savings jars according to your configured percentages.</p>
             <p>Best regards,<br>FamilyBank</p>
-          `,
-        });
+          `
+        );
         console.log(`Email sent to ${notification.parentEmail}`);
       } catch (emailError) {
         console.error(`Error sending email to ${notification.parentEmail}:`, emailError);
