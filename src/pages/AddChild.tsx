@@ -84,11 +84,11 @@ const AddChild = () => {
       // Generate secure credentials for child with simple 4-digit code
       const uniqueCode = Math.floor(1000 + Math.random() * 9000); // 4-digit code
       const childEmail = `${name.toLowerCase().replace(/\s+/g, '')}.${uniqueCode}@familybank.app`;
-      const childPassword = `child${Date.now()}${Math.random().toString(36)}`; // Secure random password
+      const tempPassword = `child${Date.now()}${Math.random().toString(36)}`; // Secure random password
       
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: childEmail,
-        password: childPassword,
+        password: tempPassword,
         options: {
           data: {
             display_name: name,
@@ -106,7 +106,7 @@ const AddChild = () => {
         refresh_token: parentSession.refresh_token
       });
 
-      // Create child profile
+      // Create child profile with initial password for credential recovery
       const { data: child, error: childError } = await supabase
         .from("children")
         .insert({
@@ -114,6 +114,7 @@ const AddChild = () => {
           user_id: authData.user.id,
           name,
           age: parseInt(age),
+          initial_password: tempPassword,
         })
         .select()
         .single();
@@ -149,7 +150,7 @@ const AddChild = () => {
       // Show credentials dialog
       setCredentials({
         email: childEmail,
-        password: childPassword,
+        password: tempPassword,
         childName: name
       });
       setShowCredentials(true);

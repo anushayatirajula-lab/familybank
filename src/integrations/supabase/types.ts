@@ -93,6 +93,7 @@ export type Database = {
           daily_spend_limit: number | null
           first_login: boolean | null
           id: string
+          initial_password: string | null
           name: string
           parent_id: string
           per_txn_limit: number | null
@@ -107,6 +108,7 @@ export type Database = {
           daily_spend_limit?: number | null
           first_login?: boolean | null
           id?: string
+          initial_password?: string | null
           name: string
           parent_id: string
           per_txn_limit?: number | null
@@ -121,6 +123,7 @@ export type Database = {
           daily_spend_limit?: number | null
           first_login?: boolean | null
           id?: string
+          initial_password?: string | null
           name?: string
           parent_id?: string
           per_txn_limit?: number | null

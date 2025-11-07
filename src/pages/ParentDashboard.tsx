@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { LogOut, Plus, CheckCircle2, Clock, ArrowLeft } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { LogOut, Plus, CheckCircle2, Clock, ArrowLeft, Key, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import coinIcon from "@/assets/coin-icon.png";
 
@@ -12,6 +13,8 @@ interface Child {
   id: string;
   name: string;
   age: number | null;
+  user_id: string | null;
+  initial_password: string | null;
   balances?: Array<{
     jar_type: string;
     amount: number;
@@ -29,6 +32,10 @@ const ParentDashboard = () => {
   const [children, setChildren] = useState<Child[]>([]);
   const [loading, setLoading] = useState(true);
   const [parentName, setParentName] = useState("");
+  const [credentialsDialog, setCredentialsDialog] = useState<{ open: boolean; child: Child | null }>({
+    open: false,
+    child: null,
+  });
 
   useEffect(() => {
     checkAuth();
@@ -152,6 +159,58 @@ const ParentDashboard = () => {
     return child.chores.filter((c) => c.status === "SUBMITTED").length;
   };
 
+  const getChildEmail = (child: Child) => {
+    if (!child.user_id) return "Not available";
+    
+    // Reconstruct the email from the child's name
+    const namePart = child.name.toLowerCase().replace(/\s+/g, "");
+    // We can't know the exact random code, but we can fetch it from profiles
+    return "Loading...";
+  };
+
+  const handleViewCredentials = async (e: React.MouseEvent, child: Child) => {
+    e.stopPropagation();
+    
+    if (!child.user_id) {
+      toast({
+        variant: "destructive",
+        title: "Credentials Not Available",
+        description: "This child doesn't have login credentials yet.",
+      });
+      return;
+    }
+
+    // Fetch the email from profiles
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .select("email")
+      .eq("id", child.user_id)
+      .single();
+
+    if (profileData) {
+      setCredentialsDialog({
+        open: true,
+        child: { ...child, email: profileData.email } as any,
+      });
+    }
+  };
+
+  const copyToClipboard = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({
+        title: "Copied!",
+        description: `${label} copied to clipboard.`,
+      });
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: "Failed to copy",
+        description: "Please copy manually.",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -255,12 +314,80 @@ const ParentDashboard = () => {
                       <span>{child.chores?.filter((c) => c.status === "APPROVED").length || 0}</span>
                     </div>
                   </div>
+
+                  {/* View Credentials Button */}
+                  {child.user_id && child.initial_password && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full mt-2"
+                      onClick={(e) => handleViewCredentials(e, child)}
+                    >
+                      <Key className="mr-2 h-4 w-4" />
+                      View Credentials
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             ))}
           </div>
         )}
       </div>
+
+      {/* Credentials Dialog */}
+      <Dialog open={credentialsDialog.open} onOpenChange={(open) => setCredentialsDialog({ open, child: null })}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Login Credentials for {credentialsDialog.child?.name}</DialogTitle>
+            <DialogDescription>
+              Use these credentials to log in. Reset the password upon first login.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 mt-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Email</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={(credentialsDialog.child as any)?.email || ""}
+                  className="flex-1 px-3 py-2 border rounded-md bg-muted"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => copyToClipboard((credentialsDialog.child as any)?.email || "", "Email")}
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Password</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={credentialsDialog.child?.initial_password || ""}
+                  className="flex-1 px-3 py-2 border rounded-md bg-muted font-mono"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => copyToClipboard(credentialsDialog.child?.initial_password || "", "Password")}
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            <div className="rounded-lg bg-amber-50 dark:bg-amber-950 p-4 border border-amber-200 dark:border-amber-800">
+              <p className="text-sm text-amber-900 dark:text-amber-100">
+                ⚠️ <strong>Important:</strong> Save these credentials and reset the password upon first login.
+              </p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
