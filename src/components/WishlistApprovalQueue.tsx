@@ -32,6 +32,11 @@ interface Child {
   name: string;
 }
 
+interface ChildBalance {
+  child_id: string;
+  wishlist_amount: number;
+}
+
 interface WishlistApprovalQueueProps {
   childId?: string;
 }
@@ -40,6 +45,7 @@ export default function WishlistApprovalQueue({ childId }: WishlistApprovalQueue
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<(WishlistItem & { child_name: string })[]>([]);
+  const [balances, setBalances] = useState<Map<string, number>>(new Map());
   const [selectedItem, setSelectedItem] = useState<WishlistItem | null>(null);
   const [actionType, setActionType] = useState<"approve" | "deny" | null>(null);
   const [processing, setProcessing] = useState(false);
@@ -78,6 +84,23 @@ export default function WishlistApprovalQueue({ childId }: WishlistApprovalQueue
       })) || [];
 
       setItems(formattedData);
+
+      // Load WISHLIST balances for all children
+      const childIds = [...new Set(formattedData.map(item => item.child_id))];
+      if (childIds.length > 0) {
+        const { data: balanceData, error: balanceError } = await supabase
+          .from("balances")
+          .select("child_id, amount")
+          .eq("jar_type", "WISHLIST")
+          .in("child_id", childIds);
+
+        if (balanceError) throw balanceError;
+
+        const balanceMap = new Map(
+          balanceData?.map(b => [b.child_id, b.amount]) || []
+        );
+        setBalances(balanceMap);
+      }
     } catch (error: any) {
       toast({
         title: "Error",
@@ -105,11 +128,16 @@ export default function WishlistApprovalQueue({ childId }: WishlistApprovalQueue
     setProcessing(true);
     try {
       if (actionType === "approve") {
-        const { error } = await supabase.functions.invoke("approve-wishlist-item", {
+        const { data, error } = await supabase.functions.invoke("approve-wishlist-item", {
           body: { wishlist_item_id: selectedItem.id },
         });
 
         if (error) throw error;
+        
+        if (data?.error) {
+          throw new Error(data.error);
+        }
+        
         toast({ title: "Item approved and purchased!" });
       } else {
         const { error } = await supabase
@@ -123,9 +151,12 @@ export default function WishlistApprovalQueue({ childId }: WishlistApprovalQueue
 
       await loadPendingItems();
     } catch (error: any) {
+      const errorMessage = error.message || "An error occurred";
       toast({
         title: "Error",
-        description: error.message,
+        description: errorMessage.includes("Insufficient balance") 
+          ? "Child doesn't have enough saved in their WISHLIST jar for this item."
+          : errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -157,52 +188,69 @@ export default function WishlistApprovalQueue({ childId }: WishlistApprovalQueue
   return (
     <>
       <div className="space-y-4">
-        {items.map((item) => (
-          <Card key={item.id}>
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <CardTitle className="text-lg">{item.title}</CardTitle>
-                  {!childId && (
-                    <Badge variant="outline" className="mt-2">
-                      {item.child_name}
-                    </Badge>
-                  )}
-                  {item.description && (
-                    <CardDescription className="mt-2">{item.description}</CardDescription>
+        {items.map((item) => {
+          const wishlistBalance = balances.get(item.child_id) || 0;
+          const hasEnoughBalance = wishlistBalance >= item.target_amount;
+          
+          return (
+            <Card key={item.id}>
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <CardTitle className="text-lg">{item.title}</CardTitle>
+                    {!childId && (
+                      <Badge variant="outline" className="mt-2">
+                        {item.child_name}
+                      </Badge>
+                    )}
+                    {item.description && (
+                      <CardDescription className="mt-2">{item.description}</CardDescription>
+                    )}
+                  </div>
+                  <Badge variant="secondary">Pending</Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-2xl font-bold text-primary">
+                        ${item.target_amount.toFixed(2)}
+                      </p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        WISHLIST balance: ${wishlistBalance.toFixed(2)}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDeny(item)}
+                        disabled={processing}
+                      >
+                        <X className="w-4 h-4 mr-1" />
+                        Deny
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => handleApprove(item)}
+                        disabled={processing || !hasEnoughBalance}
+                      >
+                        <Check className="w-4 h-4 mr-1" />
+                        Approve
+                      </Button>
+                    </div>
+                  </div>
+                  {!hasEnoughBalance && (
+                    <p className="text-sm text-amber-600 bg-amber-50 dark:bg-amber-950 p-2 rounded">
+                      ⚠️ Child needs ${(item.target_amount - wishlistBalance).toFixed(2)} more in WISHLIST jar
+                    </p>
                   )}
                 </div>
-                <Badge variant="secondary">Pending</Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <p className="text-2xl font-bold text-primary">
-                  ${item.target_amount.toFixed(2)}
-                </p>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDeny(item)}
-                    disabled={processing}
-                  >
-                    <X className="w-4 h-4 mr-1" />
-                    Deny
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => handleApprove(item)}
-                    disabled={processing}
-                  >
-                    <Check className="w-4 h-4 mr-1" />
-                    Approve
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       <AlertDialog open={!!selectedItem} onOpenChange={() => { setSelectedItem(null); setActionType(null); }}>
