@@ -401,6 +401,7 @@ export type Database = {
         | "ALLOWANCE_SPLIT"
         | "WISHLIST_SPEND"
         | "MANUAL_ADJUSTMENT"
+        | "ALLOWANCE"
       user_role: "PARENT" | "CHILD"
     }
     CompositeTypes: {
@@ -536,6 +537,7 @@ export const Constants = {
         "ALLOWANCE_SPLIT",
         "WISHLIST_SPEND",
         "MANUAL_ADJUSTMENT",
+        "ALLOWANCE",
       ],
       user_role: ["PARENT", "CHILD"],
     },
