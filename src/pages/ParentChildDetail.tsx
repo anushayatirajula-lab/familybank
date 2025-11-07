@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ArrowLeft, CheckCircle, XCircle, Clock, Trash2 } from "lucide-react";
 import coinIcon from "@/assets/coin-icon.png";
+import { AllowanceManager } from "@/components/AllowanceManager";
 
 interface Chore {
   id: string;
@@ -284,6 +285,9 @@ const ParentChildDetail = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Weekly Allowance */}
+        <AllowanceManager childId={childId!} childName={child.name} />
 
         {/* Chores Management */}
         <Card>

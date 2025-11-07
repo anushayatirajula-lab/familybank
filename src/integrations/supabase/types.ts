@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           child_id: string
           created_at: string | null
+          day_of_week: number | null
           id: string
           is_active: boolean | null
           next_payment_at: string
@@ -27,6 +28,7 @@ export type Database = {
         Insert: {
           child_id: string
           created_at?: string | null
+          day_of_week?: number | null
           id?: string
           is_active?: boolean | null
           next_payment_at: string
@@ -36,6 +38,7 @@ export type Database = {
         Update: {
           child_id?: string
           created_at?: string | null
+          day_of_week?: number | null
           id?: string
           is_active?: boolean | null
           next_payment_at?: string
