@@ -316,7 +316,7 @@ const ParentDashboard = () => {
                   </div>
 
                   {/* View Credentials Button */}
-                  {child.user_id && (
+                  {child.user_id && child.initial_password && (
                     <Button
                       variant="outline"
                       size="sm"
