@@ -777,7 +777,7 @@ serve(async (req) => {
 
                     <div className="bg-muted p-4 rounded">
                       <strong>Adding reports/analytics:</strong>
-                      <ul className="list-disc list-inside ml-2 text-sm text-muted-foreground mt-2">
+                      <ul className="list-disc list-inside ml-2 text-muted-foreground mt-2">
                         <li>Query transactions table with date filters</li>
                         <li>Use Recharts for visualizations</li>
                         <li>Create custom database views for complex queries</li>
