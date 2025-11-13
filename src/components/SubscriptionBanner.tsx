@@ -15,10 +15,13 @@ export const SubscriptionBanner = ({ daysRemaining, onSubscribe, isExpired }: Su
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>Trial Expired</AlertTitle>
         <AlertDescription className="flex items-center justify-between">
-          <span>Your 7-day free trial has ended. Subscribe now to continue using FamilyBank.</span>
-          <Button onClick={onSubscribe} size="sm" className="ml-4">
+          <div>
+            <span>Your 14-day free trial has ended.</span>
+            <p className="text-sm mt-1 opacity-80">Paid subscriptions coming soon!</p>
+          </div>
+          <Button onClick={onSubscribe} size="sm" className="ml-4" disabled>
             <CreditCard className="mr-2 h-4 w-4" />
-            Subscribe ($4.99/month)
+            Coming Soon
           </Button>
         </AlertDescription>
       </Alert>
@@ -31,10 +34,13 @@ export const SubscriptionBanner = ({ daysRemaining, onSubscribe, isExpired }: Su
         <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
         <AlertTitle className="text-amber-900 dark:text-amber-100">Trial Ending Soon</AlertTitle>
         <AlertDescription className="flex items-center justify-between text-amber-800 dark:text-amber-200">
-          <span>Your free trial ends in {daysRemaining} day{daysRemaining !== 1 ? 's' : ''}. Subscribe now for $4.99/month.</span>
-          <Button onClick={onSubscribe} size="sm" variant="outline" className="ml-4">
+          <div>
+            <span>Your free trial ends in {daysRemaining} day{daysRemaining !== 1 ? 's' : ''}.</span>
+            <p className="text-sm mt-1 opacity-80">Paid subscriptions coming soon!</p>
+          </div>
+          <Button onClick={onSubscribe} size="sm" variant="outline" className="ml-4" disabled>
             <CreditCard className="mr-2 h-4 w-4" />
-            Subscribe Now
+            Coming Soon
           </Button>
         </AlertDescription>
       </Alert>
@@ -47,10 +53,13 @@ export const SubscriptionBanner = ({ daysRemaining, onSubscribe, isExpired }: Su
         <AlertCircle className="h-4 w-4 text-primary" />
         <AlertTitle>Welcome to FamilyBank! 🎉</AlertTitle>
         <AlertDescription className="flex items-center justify-between">
-          <span>You have {daysRemaining} days left in your free trial. After that, it's just $4.99/month to continue.</span>
-          <Button onClick={onSubscribe} size="sm" variant="outline" className="ml-4">
+          <div>
+            <span>You have {daysRemaining} days left in your free trial. Enjoy all features!</span>
+            <p className="text-sm mt-1 font-medium text-primary">Paid subscriptions coming soon!</p>
+          </div>
+          <Button onClick={onSubscribe} size="sm" variant="outline" className="ml-4" disabled>
             <CreditCard className="mr-2 h-4 w-4" />
-            Subscribe Early
+            Coming Soon
           </Button>
         </AlertDescription>
       </Alert>
