@@ -5,9 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { LogOut, Plus, CheckCircle2, Clock, ArrowLeft, Key, Copy } from "lucide-react";
+import { LogOut, Plus, CheckCircle2, Clock, ArrowLeft, Key, Copy, CreditCard } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import coinIcon from "@/assets/coin-icon.png";
+import { useSubscription } from "@/hooks/use-subscription";
+import { SubscriptionBanner } from "@/components/SubscriptionBanner";
 
 interface Child {
   id: string;
@@ -29,6 +31,7 @@ interface Child {
 const ParentDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const subscription = useSubscription();
   const [children, setChildren] = useState<Child[]>([]);
   const [loading, setLoading] = useState(true);
   const [parentName, setParentName] = useState("");
@@ -229,6 +232,12 @@ const ParentDashboard = () => {
             <p className="text-sm text-muted-foreground">Welcome back, {parentName}</p>
           </div>
           <div className="flex gap-2">
+            {subscription.subscribed && (
+              <Button variant="ghost" onClick={subscription.openCustomerPortal}>
+                <CreditCard className="mr-2 h-4 w-4" />
+                Manage Subscription
+              </Button>
+            )}
             <Button variant="ghost" onClick={() => navigate("/")}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Home
@@ -242,13 +251,41 @@ const ParentDashboard = () => {
       </header>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Quick Actions */}
-        <div className="flex gap-4 mb-8">
-          <Button onClick={() => navigate("/parent/children/new")} size="lg">
-            <Plus className="mr-2 h-5 w-5" />
-            Add Child
-          </Button>
-          <Button onClick={() => navigate("/parent/chores/new")} variant="outline" size="lg">
+        {/* Subscription Banner */}
+        <SubscriptionBanner 
+          daysRemaining={subscription.getTrialDaysRemaining()}
+          onSubscribe={subscription.createCheckout}
+          isExpired={!subscription.isAccessAllowed() && !subscription.loading}
+        />
+
+        {/* Block access if trial expired and not subscribed */}
+        {!subscription.isAccessAllowed() && !subscription.loading && (
+          <Card className="text-center p-12">
+            <CardHeader>
+              <CardTitle className="text-3xl">Trial Expired</CardTitle>
+              <CardDescription className="text-lg">
+                Your 7-day free trial has ended. Subscribe to continue managing your family's finances.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button onClick={subscription.createCheckout} size="lg" className="mt-4">
+                <CreditCard className="mr-2 h-5 w-5" />
+                Subscribe Now - $4.99/month
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Show dashboard only if access is allowed */}
+        {subscription.isAccessAllowed() && (
+          <>
+            {/* Quick Actions */}
+            <div className="flex gap-4 mb-8">
+              <Button onClick={() => navigate("/parent/children/new")} size="lg">
+                <Plus className="mr-2 h-5 w-5" />
+                Add Child
+              </Button>
+              <Button onClick={() => navigate("/parent/chores/new")} variant="outline" size="lg">
             <Plus className="mr-2 h-5 w-5" />
             Create Chore
           </Button>
@@ -331,6 +368,7 @@ const ParentDashboard = () => {
               </Card>
             ))}
           </div>
+        </>
         )}
       </div>
 
