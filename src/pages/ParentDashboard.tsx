@@ -286,10 +286,10 @@ const ParentDashboard = () => {
                 Add Child
               </Button>
               <Button onClick={() => navigate("/parent/chores/new")} variant="outline" size="lg">
-            <Plus className="mr-2 h-5 w-5" />
-            Create Chore
-          </Button>
-        </div>
+                <Plus className="mr-2 h-5 w-5" />
+                Create Chore
+              </Button>
+            </div>
 
         {/* Children Overview */}
         {children.length === 0 ? (
@@ -368,7 +368,8 @@ const ParentDashboard = () => {
               </Card>
             ))}
           </div>
-        </>
+        )}
+          </>
         )}
       </div>
 
