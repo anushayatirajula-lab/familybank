@@ -41,5 +41,21 @@ export const SubscriptionBanner = ({ daysRemaining, onSubscribe, isExpired }: Su
     );
   }
 
+  if (daysRemaining > 3) {
+    return (
+      <Alert className="mb-6 border-primary bg-primary/5">
+        <AlertCircle className="h-4 w-4 text-primary" />
+        <AlertTitle>Welcome to FamilyBank! 🎉</AlertTitle>
+        <AlertDescription className="flex items-center justify-between">
+          <span>You have {daysRemaining} days left in your free trial. After that, it's just $4.99/month to continue.</span>
+          <Button onClick={onSubscribe} size="sm" variant="outline" className="ml-4">
+            <CreditCard className="mr-2 h-4 w-4" />
+            Subscribe Early
+          </Button>
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   return null;
 };
