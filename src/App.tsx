@@ -15,6 +15,7 @@ import ParentChildDetail from "./pages/ParentChildDetail";
 import ResetPassword from "./pages/ResetPassword";
 import UpdatePassword from "./pages/UpdatePassword";
 import ChildWishlist from "./pages/ChildWishlist";
+import DeveloperDocs from "./pages/DeveloperDocs";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,7 @@ const App = () => (
           <Route path="/child/login" element={<ChildAuth />} />
           <Route path="/child/:childId" element={<ChildDashboard />} />
           <Route path="/child-wishlist" element={<ChildWishlist />} />
+          <Route path="/developer-docs" element={<DeveloperDocs />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
