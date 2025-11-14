@@ -98,16 +98,13 @@ const Index = () => {
                   ✨ Simulated tokens — not real money • Parent approval required
                 </p>
                 <Button 
-                  asChild 
                   variant="outline"
                   size="sm"
                   className="bg-white/10 backdrop-blur-sm border-primary-foreground/30 text-primary-foreground hover:bg-white/20 hover:border-primary-foreground/50"
-                  onClick={() => console.log('Install button clicked!')}
+                  onClick={() => navigate("/install")}
                 >
-                  <Link to="/install">
-                    <Download className="mr-2 h-4 w-4" />
-                    Install App
-                  </Link>
+                  <Download className="mr-2 h-4 w-4" />
+                  Install App
                 </Button>
               </div>
             </div>
