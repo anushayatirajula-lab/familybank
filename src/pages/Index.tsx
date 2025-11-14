@@ -102,6 +102,7 @@ const Index = () => {
                   variant="outline"
                   size="sm"
                   className="bg-white/10 backdrop-blur-sm border-primary-foreground/30 text-primary-foreground hover:bg-white/20 hover:border-primary-foreground/50"
+                  onClick={() => console.log('Install button clicked!')}
                 >
                   <Link to="/install">
                     <Download className="mr-2 h-4 w-4" />
