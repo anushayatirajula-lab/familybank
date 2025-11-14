@@ -177,7 +177,7 @@ const Index = () => {
       <footer className="py-8 border-t">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
-            <p>© 2024 FamilyBank. All tokens are simulated and educational only.</p>
+            <p>© {new Date().getFullYear()} FamilyBank. All tokens are simulated and educational only.</p>
             <Link to="/developer-docs" className="text-primary hover:underline font-medium">
               Developer Documentation
             </Link>
