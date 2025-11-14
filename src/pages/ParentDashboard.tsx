@@ -239,9 +239,6 @@ const ParentDashboard = () => {
                 Manage Subscription
               </Button>
             )}
-            <Button variant="ghost" onClick={() => navigate("/developer-docs")}>
-              Developer Docs
-            </Button>
             <Button variant="ghost" onClick={() => navigate("/")}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Home
