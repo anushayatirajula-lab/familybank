@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import coinIcon from "@/assets/coin-icon.png";
 import { useSubscription } from "@/hooks/use-subscription";
 import { SubscriptionBanner } from "@/components/SubscriptionBanner";
+import { NotificationPrompt } from "@/components/NotificationPrompt";
 
 interface Child {
   id: string;
@@ -436,6 +437,7 @@ const ParentDashboard = () => {
           </div>
         </DialogContent>
       </Dialog>
+      <NotificationPrompt />
     </div>
   );
 };

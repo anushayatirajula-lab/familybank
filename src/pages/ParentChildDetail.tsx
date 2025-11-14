@@ -130,6 +130,23 @@ const ParentChildDetail = () => {
 
       if (approveError) throw approveError;
 
+      // Send push notification to child
+      if (child?.user_id) {
+        try {
+          await supabase.functions.invoke("send-push-notification", {
+            body: {
+              userId: child.user_id,
+              title: "Chore Approved! 🎉",
+              body: `Your chore has been approved! ${tokenReward} tokens added to your jars.`,
+              url: `/child/${childId}`,
+            },
+          });
+        } catch (notifError) {
+          console.error("Error sending notification:", notifError);
+          // Don't fail the approval if notification fails
+        }
+      }
+
       toast({
         title: "Chore approved!",
         description: "Tokens have been distributed to the child's jars.",
