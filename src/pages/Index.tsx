@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles, TrendingUp, Award } from "lucide-react";
+import { ArrowRight, Sparkles, TrendingUp, Award, Download } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import heroImage from "@/assets/hero-family.jpg";
@@ -93,12 +93,22 @@ const Index = () => {
                 </Button>
               </div>
               
-              <p className="mt-6 text-sm text-primary-foreground/70">
-                ✨ Simulated tokens — not real money • Parent approval required •{" "}
-                <Link to="/install" className="underline hover:text-primary-foreground">
-                  Install App
-                </Link>
-              </p>
+              <div className="mt-6 flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+                <p className="text-sm text-primary-foreground/70">
+                  ✨ Simulated tokens — not real money • Parent approval required
+                </p>
+                <Button 
+                  asChild 
+                  variant="outline"
+                  size="sm"
+                  className="bg-white/10 backdrop-blur-sm border-primary-foreground/30 text-primary-foreground hover:bg-white/20 hover:border-primary-foreground/50"
+                >
+                  <Link to="/install">
+                    <Download className="mr-2 h-4 w-4" />
+                    Install App
+                  </Link>
+                </Button>
+              </div>
             </div>
             
             <div className="animate-scale-in">
