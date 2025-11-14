@@ -4,6 +4,7 @@ import { ArrowRight, Sparkles, TrendingUp, Award } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import heroImage from "@/assets/hero-family.jpg";
+import { InstallPWA } from "@/components/InstallPWA";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -93,7 +94,10 @@ const Index = () => {
               </div>
               
               <p className="mt-6 text-sm text-primary-foreground/70">
-                ✨ Simulated tokens — not real money • Parent approval required
+                ✨ Simulated tokens — not real money • Parent approval required •{" "}
+                <Link to="/install" className="underline hover:text-primary-foreground">
+                  Install App
+                </Link>
               </p>
             </div>
             
@@ -184,6 +188,7 @@ const Index = () => {
           </div>
         </div>
       </footer>
+      <InstallPWA />
     </div>
   );
 };
