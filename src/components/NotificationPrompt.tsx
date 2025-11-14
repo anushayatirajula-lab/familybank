@@ -98,7 +98,7 @@ export const NotificationPrompt = () => {
       const subscriptionJson = subscription.toJSON();
       
       const { error } = await supabase
-        .from("push_subscriptions")
+        .from("push_subscriptions" as any)
         .upsert({
           user_id: user.id,
           endpoint: subscriptionJson.endpoint!,
