@@ -31,6 +31,8 @@ FamilyBank is an educational platform designed to help parents teach their child
 - **AI Integration**: Personalized financial tips and coaching using Lovable AI
 - **Real-Time Updates**: Live balance and chore status updates using Supabase Realtime
 - **Subscription Model**: Stripe-powered premium features with trial period
+- **Progressive Web App**: Installable on mobile and desktop with offline support
+- **Push Notifications**: Real-time alerts for chore approvals, allowances, and wishlist updates
 
 ## ✨ Features
 
@@ -43,6 +45,8 @@ FamilyBank is an educational platform designed to help parents teach their child
 - ✅ Approve wishlist item purchases
 - ✅ Track transaction history and analytics
 - ✅ Subscription management with Stripe
+- ✅ Push notifications for chore approvals and allowances
+- ✅ Offline support with automatic sync
 
 ### For Children
 - ✅ View and complete assigned chores
@@ -51,6 +55,8 @@ FamilyBank is an educational platform designed to help parents teach their child
 - ✅ Receive AI-powered financial coaching
 - ✅ Submit chores for parent approval
 - ✅ Real-time balance updates
+- ✅ Install as a mobile or desktop app (PWA)
+- ✅ Use app offline with automatic background sync
 
 ## 🏗️ Architecture
 
@@ -181,6 +187,7 @@ erDiagram
 - **React Router DOM** - Client-side routing
 - **React Query** - Server state management
 - **React Hook Form** - Form handling with validation
+- **vite-plugin-pwa** - Progressive Web App support
 
 ### Backend (Lovable Cloud/Supabase)
 - **PostgreSQL** - Primary database
@@ -188,6 +195,7 @@ erDiagram
 - **Row Level Security (RLS)** - Data access policies
 - **Realtime** - Live data subscriptions
 - **Edge Functions** - Serverless API endpoints (Deno runtime)
+- **Push Notifications** - Web Push API with VAPID
 
 ### External Services
 - **Stripe** - Payment processing and subscriptions
@@ -206,6 +214,7 @@ erDiagram
 - Git
 - A Lovable account (for deployment)
 - Stripe account (for payment features)
+- VAPID keys (optional, for push notifications)
 
 ### Installation
 
@@ -240,6 +249,43 @@ erDiagram
    
    Open [http://localhost:5173](http://localhost:5173) in your browser
 
+### Setting Up Push Notifications (Optional)
+
+Push notifications enable real-time alerts for chore approvals, allowances, and wishlist updates.
+
+1. **Generate VAPID Keys**
+   ```bash
+   npx web-push generate-vapid-keys
+   ```
+   Or use the online generator: https://vapidkeys.com/
+
+2. **Add Secrets via Lovable**
+   - `VAPID_PUBLIC_KEY` - Your public key
+   - `VAPID_PRIVATE_KEY` - Your private key
+   - `VITE_VAPID_PUBLIC_KEY` - Your public key (frontend)
+
+3. **Test Notifications**
+   - Log in as a parent
+   - Click "Enable Notifications" when prompted
+   - Approve a chore to receive a test notification
+
+For detailed setup instructions, see [VAPID_SETUP.md](VAPID_SETUP.md)
+
+### Progressive Web App Features
+
+FamilyBank is installable as a Progressive Web App (PWA):
+
+- **Installation**: Click the install button in your browser or visit `/install`
+- **Offline Support**: The app works offline with automatic background sync
+- **App-Like Experience**: Launch from home screen like a native app
+- **Push Notifications**: Receive notifications even when the app is closed
+
+**Supported Platforms**:
+- ✅ Desktop (Chrome, Edge, Firefox)
+- ✅ Android (Chrome, Samsung Internet)
+- ✅ iOS (Safari - limited features)
+- ✅ Windows, macOS, Linux
+
 ### Database Setup
 
 The database schema is managed through Supabase migrations in `supabase/migrations/`. When you connect the project to Lovable Cloud, migrations are automatically applied.
@@ -252,6 +298,8 @@ Key tables:
 - `transactions` - Financial transaction history
 - `wishlist_items` - Child savings goals
 - `allowances` - Automated weekly payments
+- `push_subscriptions` - Web push notification subscriptions
+- `notifications` - Notification history and delivery logs
 
 ## 📁 Project Structure
 
@@ -261,14 +309,20 @@ familybank/
 │   ├── components/          # Reusable React components
 │   │   ├── ui/             # shadcn/ui components
 │   │   ├── AICoach.tsx     # AI coaching interface
+│   │   ├── NotificationPrompt.tsx  # Push notification opt-in
+│   │   ├── OfflineIndicator.tsx    # Network status indicator
+│   │   ├── InstallPWA.tsx  # PWA installation banner
 │   │   └── ...
 │   ├── pages/              # Route components
 │   │   ├── Auth.tsx        # Parent authentication
 │   │   ├── ChildAuth.tsx   # Child login
 │   │   ├── ParentDashboard.tsx
 │   │   ├── ChildDashboard.tsx
+│   │   ├── Install.tsx     # PWA installation guide
 │   │   └── ...
 │   ├── hooks/              # Custom React hooks
+│   │   ├── use-offline.ts  # Network status detection
+│   │   └── ...
 │   ├── lib/                # Utility functions
 │   ├── integrations/       # External service integrations
 │   │   └── supabase/       # Supabase client & types
@@ -279,9 +333,15 @@ familybank/
 │   │   ├── ai-coach/       # AI coaching endpoint
 │   │   ├── create-checkout/# Stripe checkout
 │   │   ├── process-allowances/
+│   │   ├── send-push-notification/  # Push notification sender
 │   │   └── ...
 │   └── migrations/         # Database migrations
 ├── public/                 # Static assets
+│   ├── pwa-192x192.png    # PWA icon (192x192)
+│   ├── pwa-512x512.png    # PWA icon (512x512)
+│   ├── apple-touch-icon.png  # iOS icon
+│   └── robots.txt
+├── VAPID_SETUP.md         # Push notification setup guide
 └── [config files]          # Vite, TypeScript, Tailwind configs
 ```
 
