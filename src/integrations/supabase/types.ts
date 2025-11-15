@@ -225,27 +225,105 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          body: string
+          data: Json | null
+          id: string
+          read_at: string | null
+          sent_at: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          data?: Json | null
+          id?: string
+          read_at?: string | null
+          sent_at?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          data?: Json | null
+          id?: string
+          read_at?: string | null
+          sent_at?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null
+          current_period_end: string | null
           email: string
           full_name: string | null
           id: string
+          stripe_customer_id: string | null
+          subscription_id: string | null
+          subscription_status: string | null
+          trial_ends_at: string | null
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
+          current_period_end?: string | null
           email: string
           full_name?: string | null
           id: string
+          stripe_customer_id?: string | null
+          subscription_id?: string | null
+          subscription_status?: string | null
+          trial_ends_at?: string | null
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
+          current_period_end?: string | null
           email?: string
           full_name?: string | null
           id?: string
+          stripe_customer_id?: string | null
+          subscription_id?: string | null
+          subscription_status?: string | null
+          trial_ends_at?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string | null
+          endpoint: string
+          id: string
+          p256dh: string
+          updated_at: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string | null
+          endpoint: string
+          id?: string
+          p256dh: string
+          updated_at?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string | null
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          updated_at?: string | null
+          user_agent?: string | null
+          user_id?: string
         }
         Relationships: []
       }
