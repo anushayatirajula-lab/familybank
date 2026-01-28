@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -20,18 +20,48 @@ export const useSubscription = () => {
     subscription_status: 'trialing',
     loading: true,
   });
+  
+  // Track current user to detect auth changes
+  const currentUserIdRef = useRef<string | null>(null);
 
-  const checkSubscription = async () => {
+  const checkSubscription = useCallback(async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      // Get fresh session to ensure we have the latest token
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session?.user) {
         setStatus(prev => ({ ...prev, loading: false }));
+        currentUserIdRef.current = null;
         return;
+      }
+
+      // If user changed, reset status first
+      if (currentUserIdRef.current !== session.user.id) {
+        currentUserIdRef.current = session.user.id;
+        setStatus(prev => ({ ...prev, loading: true }));
       }
 
       const { data, error } = await supabase.functions.invoke('check-subscription');
       
-      if (error) throw error;
+      if (error) {
+        // If we get a 401, the session might be invalid - try to refresh
+        if (error.message?.includes('401') || error.message?.includes('Invalid or expired')) {
+          console.log('Session may be stale, attempting refresh...');
+          const { data: refreshData } = await supabase.auth.refreshSession();
+          if (refreshData?.session) {
+            // Retry with fresh session
+            const { data: retryData, error: retryError } = await supabase.functions.invoke('check-subscription');
+            if (!retryError && retryData) {
+              setStatus({
+                ...retryData,
+                loading: false,
+              });
+              return;
+            }
+          }
+        }
+        throw error;
+      }
 
       setStatus({
         ...data,
@@ -41,7 +71,7 @@ export const useSubscription = () => {
       console.error('Error checking subscription:', error);
       setStatus(prev => ({ ...prev, loading: false }));
     }
-  };
+  }, []);
 
   const createCheckout = async () => {
     try {
@@ -95,11 +125,33 @@ export const useSubscription = () => {
   useEffect(() => {
     checkSubscription();
 
+    // Listen for auth state changes to refresh subscription status
+    const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          // Small delay to ensure the session is fully established
+          setTimeout(checkSubscription, 100);
+        } else if (event === 'SIGNED_OUT') {
+          currentUserIdRef.current = null;
+          setStatus({
+            subscribed: false,
+            on_trial: true,
+            trial_ends_at: null,
+            subscription_status: 'trialing',
+            loading: false,
+          });
+        }
+      }
+    );
+
     // Refresh subscription status periodically
     const interval = setInterval(checkSubscription, 60000); // Check every minute
 
-    return () => clearInterval(interval);
-  }, []);
+    return () => {
+      authSubscription.unsubscribe();
+      clearInterval(interval);
+    };
+  }, [checkSubscription]);
 
   return {
     ...status,
