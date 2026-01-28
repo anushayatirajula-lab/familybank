@@ -21,6 +21,7 @@ import { AllowanceManager } from "@/components/AllowanceManager";
 import WishlistApprovalQueue from "@/components/WishlistApprovalQueue";
 import { SpendingInsights } from "@/components/SpendingInsights";
 import { CashOutDialog } from "@/components/CashOutDialog";
+import { JarPercentageEditor } from "@/components/JarPercentageEditor";
 
 interface Chore {
   id: string;
@@ -321,12 +322,19 @@ const ParentChildDetail = () => {
                 </div>
                 Total Balance
               </CardTitle>
-              <CashOutDialog
-                childId={childId!}
-                childName={child.name}
-                balances={balances}
-                onCashOutComplete={fetchChildData}
-              />
+              <div className="flex gap-2">
+                <JarPercentageEditor
+                  childId={childId!}
+                  childName={child.name}
+                  onUpdate={fetchChildData}
+                />
+                <CashOutDialog
+                  childId={childId!}
+                  childName={child.name}
+                  balances={balances}
+                  onCashOutComplete={fetchChildData}
+                />
+              </div>
             </div>
           </CardHeader>
           <CardContent>
