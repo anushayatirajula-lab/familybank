@@ -16,10 +16,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, CheckCircle, XCircle, Clock, Trash2 } from "lucide-react";
+import { ArrowLeft, CheckCircle, XCircle, Clock, Trash2, RefreshCw } from "lucide-react";
 import coinIcon from "@/assets/coin-icon.png";
 import { AllowanceManager } from "@/components/AllowanceManager";
 import WishlistApprovalQueue from "@/components/WishlistApprovalQueue";
+import { SpendingInsights } from "@/components/SpendingInsights";
 
 interface Chore {
   id: string;
@@ -29,6 +30,9 @@ interface Chore {
   status: string;
   due_at: string | null;
   submitted_at: string | null;
+  is_recurring: boolean | null;
+  recurrence_type: string | null;
+  recurrence_day: number | null;
 }
 
 interface Balance {
@@ -315,6 +319,9 @@ const ParentChildDetail = () => {
         {/* Weekly Allowance */}
         <AllowanceManager childId={childId!} childName={child.name} />
 
+        {/* Spending Insights */}
+        <SpendingInsights childId={childId!} />
+
         {/* Wishlist Approval Queue */}
         <Card>
           <CardHeader>
@@ -358,11 +365,17 @@ const ParentChildDetail = () => {
                       {chore.description && (
                         <p className="text-sm text-muted-foreground ml-8">{chore.description}</p>
                       )}
-                      <div className="flex items-center gap-4 mt-2 ml-8">
+                      <div className="flex items-center gap-4 mt-2 ml-8 flex-wrap">
                         <Badge className="bg-gradient-coin">
                           ${tokensToMoney(Number(chore.token_reward))}
                         </Badge>
                         <Badge variant="outline">{chore.status}</Badge>
+                        {chore.is_recurring && (
+                          <Badge variant="secondary" className="flex items-center gap-1">
+                            <RefreshCw className="h-3 w-3" />
+                            {chore.recurrence_type === "daily" ? "Daily" : `Weekly`}
+                          </Badge>
+                        )}
                       </div>
                     </div>
                     

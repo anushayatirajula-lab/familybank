@@ -158,6 +158,10 @@ export type Database = {
           description: string | null
           due_at: string | null
           id: string
+          is_recurring: boolean | null
+          parent_chore_id: string | null
+          recurrence_day: number | null
+          recurrence_type: string | null
           status: Database["public"]["Enums"]["chore_status"] | null
           submitted_at: string | null
           title: string
@@ -171,6 +175,10 @@ export type Database = {
           description?: string | null
           due_at?: string | null
           id?: string
+          is_recurring?: boolean | null
+          parent_chore_id?: string | null
+          recurrence_day?: number | null
+          recurrence_type?: string | null
           status?: Database["public"]["Enums"]["chore_status"] | null
           submitted_at?: string | null
           title: string
@@ -184,6 +192,10 @@ export type Database = {
           description?: string | null
           due_at?: string | null
           id?: string
+          is_recurring?: boolean | null
+          parent_chore_id?: string | null
+          recurrence_day?: number | null
+          recurrence_type?: string | null
           status?: Database["public"]["Enums"]["chore_status"] | null
           submitted_at?: string | null
           title?: string
@@ -196,6 +208,13 @@ export type Database = {
             columns: ["child_id"]
             isOneToOne: false
             referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chores_parent_chore_id_fkey"
+            columns: ["parent_chore_id"]
+            isOneToOne: false
+            referencedRelation: "chores"
             referencedColumns: ["id"]
           },
         ]
