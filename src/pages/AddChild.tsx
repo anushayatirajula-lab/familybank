@@ -16,7 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-const JAR_TYPES = ["TOYS", "BOOKS", "SHOPPING", "CHARITY", "WISHLIST"];
+const JAR_TYPES = ["SAVINGS", "BOOKS", "SHOPPING", "CHARITY", "WISHLIST"];
 
 const AddChild = () => {
   const navigate = useNavigate();
@@ -29,7 +29,7 @@ const AddChild = () => {
   const [copiedEmail, setCopiedEmail] = useState(false);
   const [copiedPassword, setCopiedPassword] = useState(false);
   const [jarPercentages, setJarPercentages] = useState({
-    TOYS: 30,
+    SAVINGS: 30,
     BOOKS: 20,
     SHOPPING: 20,
     CHARITY: 10,
@@ -124,7 +124,7 @@ const AddChild = () => {
       // Create jars
       const jarsData = JAR_TYPES.map((jarType) => ({
         child_id: child.id,
-        jar_type: jarType as "TOYS" | "BOOKS" | "SHOPPING" | "CHARITY" | "WISHLIST",
+        jar_type: jarType as "SAVINGS" | "BOOKS" | "SHOPPING" | "CHARITY" | "WISHLIST",
         percentage: jarPercentages[jarType as keyof typeof jarPercentages],
       }));
 
@@ -137,7 +137,7 @@ const AddChild = () => {
       // Create initial balances (all zero)
       const balancesData = JAR_TYPES.map((jarType) => ({
         child_id: child.id,
-        jar_type: jarType as "TOYS" | "BOOKS" | "SHOPPING" | "CHARITY" | "WISHLIST",
+        jar_type: jarType as "SAVINGS" | "BOOKS" | "SHOPPING" | "CHARITY" | "WISHLIST",
         amount: 0,
       }));
 

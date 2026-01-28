@@ -35,10 +35,10 @@ interface CashOutDialogProps {
   onCashOutComplete: () => void;
 }
 
-const NON_WISHLIST_JARS = ["TOYS", "BOOKS", "SHOPPING", "CHARITY"];
+const NON_WISHLIST_JARS = ["SAVINGS", "BOOKS", "SHOPPING", "CHARITY"];
 
 const JAR_LABELS: Record<string, string> = {
-  TOYS: "Toys",
+  SAVINGS: "Savings",
   BOOKS: "Books",
   SHOPPING: "Shopping",
   CHARITY: "Charity",
@@ -98,7 +98,7 @@ export function CashOutDialog({ childId, childName, balances, onCashOutComplete 
       const internalAmount = Math.round(cashOutAmount * 10);
 
       // Update the balance - cast jar_type to the expected enum type
-      const jarType = selectedJar as "TOYS" | "BOOKS" | "SHOPPING" | "CHARITY" | "WISHLIST";
+      const jarType = selectedJar as "SAVINGS" | "BOOKS" | "SHOPPING" | "CHARITY" | "WISHLIST";
       
       const { error: balanceError } = await supabase
         .from("balances")
