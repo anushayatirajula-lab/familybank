@@ -4,7 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 const logStep = (step: string, details?: any) => {
@@ -17,30 +17,61 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const supabaseClient = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-    { auth: { persistSession: false } }
-  );
-
   try {
     logStep("Function started");
 
+    // 1. Verify authentication - get the auth header
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header provided");
-    
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(
+        JSON.stringify({ error: "No authorization header provided" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // 2. Create authenticated client for JWT validation
+    const supabaseAuth = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    // 3. Validate JWT using getClaims
     const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError) throw new Error(`Authentication error: ${userError.message}`);
-    const user = userData.user;
-    if (!user?.email) throw new Error("User not authenticated or email not available");
-    logStep("User authenticated", { userId: user.id, email: user.email });
+    const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
+    
+    if (claimsError || !claimsData?.claims?.sub) {
+      logStep("Authentication failed", { error: claimsError?.message });
+      return new Response(
+        JSON.stringify({ error: "Invalid or expired token" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const userId = claimsData.claims.sub;
+    const userEmail = claimsData.claims.email as string;
+    
+    if (!userEmail) {
+      return new Response(
+        JSON.stringify({ error: "User email not available" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    logStep("User authenticated", { userId, email: userEmail });
+
+    // 4. Create service role client for database operations
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
+    );
 
     // Get profile with trial info
     const { data: profile } = await supabaseClient
       .from('profiles')
       .select('trial_ends_at, subscription_status, stripe_customer_id, subscription_id')
-      .eq('id', user.id)
+      .eq('id', userId)
       .single();
 
     logStep("Profile retrieved", { profile });
@@ -50,7 +81,7 @@ serve(async (req) => {
     });
 
     // Check Stripe for active subscription
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
     
     if (customers.data.length === 0) {
       // No customer in Stripe, check trial status
@@ -79,7 +110,7 @@ serve(async (req) => {
       await supabaseClient
         .from('profiles')
         .update({ stripe_customer_id: customerId })
-        .eq('id', user.id);
+        .eq('id', userId);
     }
 
     const subscriptions = await stripe.subscriptions.list({
@@ -103,7 +134,7 @@ serve(async (req) => {
         .update({ 
           subscription_status: isTrialActive ? 'trialing' : 'expired',
         })
-        .eq('id', user.id);
+        .eq('id', userId);
 
       return new Response(JSON.stringify({
         subscribed: false,
@@ -135,7 +166,7 @@ serve(async (req) => {
         subscription_status: subscription.status,
         current_period_end: subscriptionEnd.toISOString(),
       })
-      .eq('id', user.id);
+      .eq('id', userId);
 
     return new Response(JSON.stringify({
       subscribed: isActive,
