@@ -188,6 +188,31 @@ const ParentChildDetail = () => {
     }
   };
 
+  const handleDeleteChore = async (choreId: string, choreTitle: string) => {
+    try {
+      const { error } = await supabase
+        .from("chores")
+        .delete()
+        .eq("id", choreId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Chore deleted",
+        description: `"${choreTitle}" has been removed.`,
+      });
+      
+      fetchChildData();
+    } catch (error) {
+      console.error("Error deleting chore:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete chore.",
+      });
+    }
+  };
+
   const getTotalBalance = () => {
     return balances.reduce((sum, b) => sum + Number(b.amount), 0);
   };
@@ -381,14 +406,41 @@ const ParentChildDetail = () => {
                     
                     <div className="flex gap-2">
                       {chore.status !== "APPROVED" && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => navigate(`/parent/chores/${chore.id}/edit`)}
-                        >
-                          <Pencil className="mr-1 h-4 w-4" />
-                          Edit
-                        </Button>
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => navigate(`/parent/chores/${chore.id}/edit`)}
+                          >
+                            <Pencil className="mr-1 h-4 w-4" />
+                            Edit
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button size="sm" variant="destructive">
+                                <Trash2 className="mr-1 h-4 w-4" />
+                                Delete
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Chore?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This will permanently delete "{chore.title}". This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDeleteChore(chore.id, chore.title)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </>
                       )}
                       {chore.status === "SUBMITTED" && (
                         <>
