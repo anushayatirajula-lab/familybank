@@ -198,7 +198,7 @@ const Auth = () => {
                   Create Account
                 </Button>
                 <p className="text-xs text-muted-foreground text-center">
-                  By signing up, you agree to our simulated token policy. All tokens are educational only.
+                  By signing up, you agree to our terms. All balances are for educational purposes only.
                 </p>
               </form>
             </TabsContent>

@@ -50,8 +50,8 @@ export default function WishlistApprovalQueue({ childId }: WishlistApprovalQueue
   const [actionType, setActionType] = useState<"approve" | "deny" | null>(null);
   const [processing, setProcessing] = useState(false);
 
-  const tokensToMoney = (tokens: number) => {
-    return (tokens / 10).toFixed(2);
+  const formatMoney = (amount: number) => {
+    return (amount / 10).toFixed(2);
   };
 
   useEffect(() => {
@@ -219,10 +219,10 @@ export default function WishlistApprovalQueue({ childId }: WishlistApprovalQueue
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-2xl font-bold text-primary">
-                        ${tokensToMoney(item.target_amount)}
+                        ${formatMoney(item.target_amount)}
                       </p>
                       <p className="text-sm text-muted-foreground mt-1">
-                        WISHLIST saved: ${tokensToMoney(wishlistBalance)}
+                        WISHLIST saved: ${formatMoney(wishlistBalance)}
                       </p>
                     </div>
                     <div className="flex gap-2">
@@ -247,7 +247,7 @@ export default function WishlistApprovalQueue({ childId }: WishlistApprovalQueue
                   </div>
                   {!hasEnoughBalance && (
                     <p className="text-sm text-amber-600 bg-amber-50 dark:bg-amber-950 p-2 rounded">
-                      ⚠️ Child needs ${tokensToMoney(item.target_amount - wishlistBalance)} more (${tokensToMoney(wishlistBalance)} saved / ${tokensToMoney(item.target_amount)} needed)
+                      ⚠️ Child needs ${formatMoney(item.target_amount - wishlistBalance)} more (${formatMoney(wishlistBalance)} saved / ${formatMoney(item.target_amount)} needed)
                     </p>
                   )}
                 </div>
@@ -266,7 +266,7 @@ export default function WishlistApprovalQueue({ childId }: WishlistApprovalQueue
             <AlertDialogDescription>
               {actionType === "approve" ? (
                 <>
-                  This will deduct <strong>${tokensToMoney(selectedItem?.target_amount || 0)}</strong> from{" "}
+                  This will deduct <strong>${formatMoney(selectedItem?.target_amount || 0)}</strong> from{" "}
                   {childId ? "the" : selectedItem ? `${(selectedItem as any).child_name}'s` : "the"} WISHLIST jar and mark the item as purchased. An email notification will be sent.
                 </>
               ) : (

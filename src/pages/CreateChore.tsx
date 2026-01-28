@@ -24,13 +24,13 @@ const CreateChore = () => {
   const [selectedChild, setSelectedChild] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [tokenReward, setTokenReward] = useState("");
+  const [rewardAmount, setRewardAmount] = useState("");
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurrenceType, setRecurrenceType] = useState<"daily" | "weekly">("weekly");
   const [recurrenceDay, setRecurrenceDay] = useState<number>(1); // Monday
 
-  const moneyToTokens = (money: number) => {
-    return money * 10;
+  const dollarsToCents = (dollars: number) => {
+    return dollars * 10;
   };
 
   useEffect(() => {
@@ -73,14 +73,14 @@ const CreateChore = () => {
     setLoading(true);
 
     try {
-      const money = parseFloat(tokenReward);
-      const tokens = moneyToTokens(money);
+      const dollars = parseFloat(rewardAmount);
+      const storedAmount = dollarsToCents(dollars);
       
       const choreData: any = {
         child_id: selectedChild,
         title,
         description: description || null,
-        token_reward: tokens,
+        token_reward: storedAmount,
         status: "PENDING",
         is_recurring: isRecurring,
       };
@@ -180,8 +180,8 @@ const CreateChore = () => {
                   type="number"
                   min="0"
                   step="0.01"
-                  value={tokenReward}
-                  onChange={(e) => setTokenReward(e.target.value)}
+                  value={rewardAmount}
+                  onChange={(e) => setRewardAmount(e.target.value)}
                   placeholder="5.00"
                   required
                 />
