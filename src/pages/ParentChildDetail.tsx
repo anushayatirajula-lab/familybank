@@ -16,7 +16,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, CheckCircle, XCircle, Clock, Trash2, RefreshCw } from "lucide-react";
+import { ArrowLeft, CheckCircle, XCircle, Clock, Trash2, RefreshCw, Pencil } from "lucide-react";
 import coinIcon from "@/assets/coin-icon.png";
 import { AllowanceManager } from "@/components/AllowanceManager";
 import WishlistApprovalQueue from "@/components/WishlistApprovalQueue";
@@ -379,25 +379,37 @@ const ParentChildDetail = () => {
                       </div>
                     </div>
                     
-                    {chore.status === "SUBMITTED" && (
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          onClick={() => handleApproveChore(chore.id, chore.token_reward)}
-                        >
-                          <CheckCircle className="mr-1 h-4 w-4" />
-                          Approve
-                        </Button>
+                    <div className="flex gap-2">
+                      {chore.status !== "APPROVED" && (
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => handleRejectChore(chore.id)}
+                          onClick={() => navigate(`/parent/chores/${chore.id}/edit`)}
                         >
-                          <XCircle className="mr-1 h-4 w-4" />
-                          Reject
+                          <Pencil className="mr-1 h-4 w-4" />
+                          Edit
                         </Button>
-                      </div>
-                    )}
+                      )}
+                      {chore.status === "SUBMITTED" && (
+                        <>
+                          <Button
+                            size="sm"
+                            onClick={() => handleApproveChore(chore.id, chore.token_reward)}
+                          >
+                            <CheckCircle className="mr-1 h-4 w-4" />
+                            Approve
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleRejectChore(chore.id)}
+                          >
+                            <XCircle className="mr-1 h-4 w-4" />
+                            Reject
+                          </Button>
+                        </>
+                      )}
+                    </div>
                   </div>
                 ))
               )}
