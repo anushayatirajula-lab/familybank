@@ -7,8 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, RefreshCw } from "lucide-react";
 
 interface Child {
   id: string;
@@ -24,6 +25,9 @@ const CreateChore = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [tokenReward, setTokenReward] = useState("");
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurrenceType, setRecurrenceType] = useState<"daily" | "weekly">("weekly");
+  const [recurrenceDay, setRecurrenceDay] = useState<number>(1); // Monday
 
   const moneyToTokens = (money: number) => {
     return money * 10;
@@ -72,15 +76,23 @@ const CreateChore = () => {
       const money = parseFloat(tokenReward);
       const tokens = moneyToTokens(money);
       
-      const { error } = await supabase
-        .from("chores")
-        .insert({
-          child_id: selectedChild,
-          title,
-          description: description || null,
-          token_reward: tokens,
-          status: "PENDING",
-        });
+      const choreData: any = {
+        child_id: selectedChild,
+        title,
+        description: description || null,
+        token_reward: tokens,
+        status: "PENDING",
+        is_recurring: isRecurring,
+      };
+
+      if (isRecurring) {
+        choreData.recurrence_type = recurrenceType;
+        if (recurrenceType === "weekly") {
+          choreData.recurrence_day = recurrenceDay;
+        }
+      }
+
+      const { error } = await supabase.from("chores").insert(choreData);
 
       if (error) throw error;
 
@@ -181,6 +193,73 @@ const CreateChore = () => {
                 <p className="text-sm text-muted-foreground">
                   Tokens will be automatically split into jars when approved
                 </p>
+              </div>
+
+              {/* Recurring Chore Options */}
+              <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="recurring" className="flex items-center gap-2">
+                      <RefreshCw className="h-4 w-4" />
+                      Recurring Chore
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Automatically create this chore on a schedule
+                    </p>
+                  </div>
+                  <Switch
+                    id="recurring"
+                    checked={isRecurring}
+                    onCheckedChange={setIsRecurring}
+                  />
+                </div>
+
+                {isRecurring && (
+                  <div className="space-y-4 pt-2 border-t">
+                    <div className="space-y-2">
+                      <Label>Repeat</Label>
+                      <Select
+                        value={recurrenceType}
+                        onValueChange={(value: "daily" | "weekly") => setRecurrenceType(value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="daily">Daily</SelectItem>
+                          <SelectItem value="weekly">Weekly</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {recurrenceType === "weekly" && (
+                      <div className="space-y-2">
+                        <Label>Day of Week</Label>
+                        <Select
+                          value={recurrenceDay.toString()}
+                          onValueChange={(value) => setRecurrenceDay(parseInt(value))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="0">Sunday</SelectItem>
+                            <SelectItem value="1">Monday</SelectItem>
+                            <SelectItem value="2">Tuesday</SelectItem>
+                            <SelectItem value="3">Wednesday</SelectItem>
+                            <SelectItem value="4">Thursday</SelectItem>
+                            <SelectItem value="5">Friday</SelectItem>
+                            <SelectItem value="6">Saturday</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
+                    <p className="text-xs text-muted-foreground bg-amber-50 dark:bg-amber-950 p-2 rounded border border-amber-200 dark:border-amber-800">
+                      💡 This chore will be automatically created {recurrenceType === "daily" ? "every day" : `every ${["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][recurrenceDay]}`} after the first one is approved.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <Button type="submit" className="w-full" disabled={loading}>
