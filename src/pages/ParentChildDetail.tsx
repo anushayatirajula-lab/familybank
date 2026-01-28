@@ -249,7 +249,7 @@ const ParentChildDetail = () => {
 
   const getJarColor = (jarType: string) => {
     const colors: Record<string, string> = {
-      TOYS: "bg-jar-toys",
+      SAVINGS: "bg-jar-savings",
       BOOKS: "bg-jar-books",
       SHOPPING: "bg-jar-shopping",
       CHARITY: "bg-jar-charity",

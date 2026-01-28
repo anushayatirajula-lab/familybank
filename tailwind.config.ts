@@ -49,7 +49,7 @@ export default {
           foreground: "hsl(var(--card-foreground))",
         },
         jar: {
-          toys: "hsl(var(--jar-toys))",
+          savings: "hsl(var(--jar-savings))",
           books: "hsl(var(--jar-books))",
           shopping: "hsl(var(--jar-shopping))",
           charity: "hsl(var(--jar-charity))",

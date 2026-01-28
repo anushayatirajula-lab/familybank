@@ -14,7 +14,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-const JAR_TYPES = ["TOYS", "BOOKS", "SHOPPING", "CHARITY", "WISHLIST"] as const;
+const JAR_TYPES = ["SAVINGS", "BOOKS", "SHOPPING", "CHARITY", "WISHLIST"] as const;
 
 interface JarPercentageEditorProps {
   childId: string;
@@ -28,7 +28,7 @@ export const JarPercentageEditor = ({ childId, childName, onUpdate }: JarPercent
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [jarPercentages, setJarPercentages] = useState<Record<string, number>>({
-    TOYS: 20,
+    SAVINGS: 20,
     BOOKS: 20,
     SHOPPING: 20,
     CHARITY: 20,
@@ -122,7 +122,7 @@ export const JarPercentageEditor = ({ childId, childName, onUpdate }: JarPercent
 
   const getJarColor = (jarType: string) => {
     const colors: Record<string, string> = {
-      TOYS: "bg-jar-toys",
+      SAVINGS: "bg-jar-savings",
       BOOKS: "bg-jar-books",
       SHOPPING: "bg-jar-shopping",
       CHARITY: "bg-jar-charity",

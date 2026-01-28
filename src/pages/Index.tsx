@@ -137,8 +137,8 @@ const Index = () => {
           
           <div className="grid md:grid-cols-3 gap-8">
             <div className="p-6 rounded-2xl bg-gradient-card shadow-elevated hover:shadow-xl transition-all animate-fade-in">
-              <div className="w-12 h-12 bg-jar-toys/20 rounded-xl flex items-center justify-center mb-4">
-                <Award className="w-6 h-6 text-jar-toys" />
+              <div className="w-12 h-12 bg-jar-savings/20 rounded-xl flex items-center justify-center mb-4">
+                <Award className="w-6 h-6 text-jar-savings" />
               </div>
               <h3 className="text-xl font-semibold mb-3">Earn Through Chores</h3>
               <p className="text-muted-foreground">
@@ -152,7 +152,7 @@ const Index = () => {
               </div>
               <h3 className="text-xl font-semibold mb-3">Save in Colorful Jars</h3>
               <p className="text-muted-foreground">
-                Tokens split into Toys, Books, Shopping, Charity, and Wishlist jars. Kids see their progress in real-time.
+                Tokens split into Savings, Books, Shopping, Charity, and Wishlist jars. Kids see their progress in real-time.
               </p>
             </div>
             

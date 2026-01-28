@@ -40,7 +40,7 @@ All colors MUST be HSL.
     --radius: 1rem;
 
     /* Jar colors */
-    --jar-toys: 330 80% 65%;
+    --jar-savings: 160 70% 50%;
     --jar-books: 200 85% 60%;
     --jar-shopping: 280 75% 65%;
     --jar-charity: 140 70% 55%;
@@ -94,7 +94,7 @@ All colors MUST be HSL.
     --ring: 258 89% 70%;
 
     /* Jar colors for dark mode */
-    --jar-toys: 330 75% 60%;
+    --jar-savings: 160 65% 45%;
     --jar-books: 200 80% 55%;
     --jar-shopping: 280 70% 60%;
     --jar-charity: 140 65% 50%;

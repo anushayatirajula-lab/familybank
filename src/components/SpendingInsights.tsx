@@ -43,7 +43,7 @@ interface Balance {
 }
 
 const JAR_COLORS: Record<string, string> = {
-  TOYS: "#f97316",
+  SAVINGS: "#10b981",
   BOOKS: "#3b82f6",
   SHOPPING: "#a855f7",
   CHARITY: "#22c55e",
