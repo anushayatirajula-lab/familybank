@@ -50,12 +50,12 @@ export const AllowanceManager = ({ childId, childName }: AllowanceManagerProps) 
   const [amount, setAmount] = useState("");
   const [dayOfWeek, setDayOfWeek] = useState("1");
 
-  const tokensToMoney = (tokens: number) => {
-    return (tokens / 10).toFixed(2);
+  const formatMoney = (amount: number) => {
+    return (amount / 10).toFixed(2);
   };
 
-  const moneyToTokens = (money: number) => {
-    return money * 10;
+  const dollarsToCents = (dollars: number) => {
+    return dollars * 10;
   };
 
   useEffect(() => {
@@ -111,10 +111,10 @@ export const AllowanceManager = ({ childId, childName }: AllowanceManagerProps) 
     }
 
     try {
-      const tokens = moneyToTokens(parseFloat(amount));
+      const storedAmount = dollarsToCents(parseFloat(amount));
       const allowanceData = {
         child_id: childId,
-        weekly_amount: tokens,
+        weekly_amount: storedAmount,
         day_of_week: parseInt(dayOfWeek),
         next_payment_at: calculateNextPaymentDate(parseInt(dayOfWeek)),
         is_active: true,
@@ -161,7 +161,7 @@ export const AllowanceManager = ({ childId, childName }: AllowanceManagerProps) 
 
   const handleEdit = (allowance: Allowance) => {
     setEditingId(allowance.id);
-    setAmount(tokensToMoney(allowance.weekly_amount));
+    setAmount(formatMoney(allowance.weekly_amount));
     setDayOfWeek(allowance.day_of_week.toString());
   };
 
@@ -272,7 +272,7 @@ export const AllowanceManager = ({ childId, childName }: AllowanceManagerProps) 
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="font-semibold">
-                      ${tokensToMoney(allowance.weekly_amount)}
+                      ${formatMoney(allowance.weekly_amount)}
                     </span>
                     <span className="text-sm text-muted-foreground">
                       • Every {DAYS_OF_WEEK.find((d) => d.value === allowance.day_of_week)?.label}
@@ -300,7 +300,7 @@ export const AllowanceManager = ({ childId, childName }: AllowanceManagerProps) 
                       <AlertDialogHeader>
                         <AlertDialogTitle>Delete Allowance?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This will stop the weekly allowance of ${tokensToMoney(allowance.weekly_amount)} ({allowance.weekly_amount.toFixed(0)} tokens) for {childName}.
+                          This will stop the weekly allowance of ${formatMoney(allowance.weekly_amount)} for {childName}.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>

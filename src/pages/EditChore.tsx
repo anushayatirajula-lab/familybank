@@ -21,17 +21,17 @@ const EditChore = () => {
   const [childId, setChildId] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [tokenReward, setTokenReward] = useState("");
+  const [rewardAmount, setRewardAmount] = useState("");
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurrenceType, setRecurrenceType] = useState<"daily" | "weekly">("weekly");
   const [recurrenceDay, setRecurrenceDay] = useState<number>(1);
 
-  const tokensToMoney = (tokens: number) => {
-    return tokens / 10;
+  const formatStoredAmount = (stored: number) => {
+    return stored / 10;
   };
 
-  const moneyToTokens = (money: number) => {
-    return money * 10;
+  const dollarsToCents = (dollars: number) => {
+    return dollars * 10;
   };
 
   useEffect(() => {
@@ -62,7 +62,7 @@ const EditChore = () => {
 
       setTitle(chore.title);
       setDescription(chore.description || "");
-      setTokenReward(tokensToMoney(Number(chore.token_reward)).toString());
+      setRewardAmount(formatStoredAmount(Number(chore.token_reward)).toString());
       setIsRecurring(chore.is_recurring || false);
       setRecurrenceType((chore.recurrence_type as "daily" | "weekly") || "weekly");
       setRecurrenceDay(chore.recurrence_day ?? 1);
@@ -85,13 +85,13 @@ const EditChore = () => {
     setLoading(true);
 
     try {
-      const money = parseFloat(tokenReward);
-      const tokens = moneyToTokens(money);
+      const dollars = parseFloat(rewardAmount);
+      const storedAmount = dollarsToCents(dollars);
 
       const choreData: any = {
         title,
         description: description || null,
-        token_reward: tokens,
+        token_reward: storedAmount,
         is_recurring: isRecurring,
         recurrence_type: isRecurring ? recurrenceType : null,
         recurrence_day: isRecurring && recurrenceType === "weekly" ? recurrenceDay : null,
@@ -181,8 +181,8 @@ const EditChore = () => {
                   type="number"
                   min="0"
                   step="0.01"
-                  value={tokenReward}
-                  onChange={(e) => setTokenReward(e.target.value)}
+                  value={rewardAmount}
+                  onChange={(e) => setRewardAmount(e.target.value)}
                   placeholder="5.00"
                   required
                 />
