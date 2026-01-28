@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { LogOut, Plus, CheckCircle2, Clock, ArrowLeft, Key, Copy, CreditCard } from "lucide-react";
+import { LogOut, Plus, CheckCircle2, Clock, ArrowLeft, Key, Copy, CreditCard, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import coinIcon from "@/assets/coin-icon.png";
 import { useSubscription } from "@/hooks/use-subscription";
@@ -153,6 +153,34 @@ const ParentDashboard = () => {
     navigate("/");
   };
 
+  const handleGenerateRecurringChores = async () => {
+    try {
+      toast({
+        title: "Processing...",
+        description: "Generating recurring chores for today.",
+      });
+
+      const { data, error } = await supabase.functions.invoke("process-recurring-chores");
+
+      if (error) throw error;
+
+      toast({
+        title: "Success!",
+        description: data?.message || "Recurring chores generated successfully.",
+      });
+
+      // Refresh dashboard data
+      fetchDashboardData();
+    } catch (error) {
+      console.error("Error generating recurring chores:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to generate recurring chores.",
+      });
+    }
+  };
+
   const getTotalBalance = (child: Child) => {
     if (!child.balances) return 0;
     return child.balances.reduce((sum, b) => sum + Number(b.amount), 0);
@@ -281,7 +309,7 @@ const ParentDashboard = () => {
         {subscription.isAccessAllowed() && (
           <>
             {/* Quick Actions */}
-            <div className="flex gap-4 mb-8">
+            <div className="flex flex-wrap gap-4 mb-8">
               <Button onClick={() => navigate("/parent/children/new")} size="lg">
                 <Plus className="mr-2 h-5 w-5" />
                 Add Child
@@ -289,6 +317,10 @@ const ParentDashboard = () => {
               <Button onClick={() => navigate("/parent/chores/new")} variant="outline" size="lg">
                 <Plus className="mr-2 h-5 w-5" />
                 Create Chore
+              </Button>
+              <Button onClick={handleGenerateRecurringChores} variant="outline" size="lg">
+                <RefreshCw className="mr-2 h-5 w-5" />
+                Generate Recurring Chores
               </Button>
             </div>
 
