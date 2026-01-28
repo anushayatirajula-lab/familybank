@@ -106,7 +106,7 @@ const AddChild = () => {
         refresh_token: parentSession.refresh_token
       });
 
-      // Create child profile with initial password for credential recovery
+      // Create child profile (password is shown once and NOT stored for security)
       const { data: child, error: childError } = await supabase
         .from("children")
         .insert({
@@ -114,7 +114,6 @@ const AddChild = () => {
           user_id: authData.user.id,
           name,
           age: parseInt(age),
-          initial_password: tempPassword,
         })
         .select()
         .single();
@@ -221,9 +220,12 @@ const AddChild = () => {
                 </Button>
               </div>
             </div>
-            <div className="rounded-lg bg-amber-50 dark:bg-amber-950 p-4 border border-amber-200 dark:border-amber-800">
-              <p className="text-sm text-amber-900 dark:text-amber-100">
-                ⚠️ <strong>Important:</strong> Save these credentials and reset the password upon first login.
+            <div className="rounded-lg bg-destructive/10 p-4 border border-destructive/30">
+              <p className="text-sm text-destructive font-medium">
+                🔐 <strong>IMPORTANT - Save Now!</strong>
+              </p>
+              <p className="text-sm text-destructive/90 mt-1">
+                This password will NOT be shown again and cannot be recovered. Copy it now and share it securely with {credentials.childName}. They must change it on first login.
               </p>
             </div>
             <Button onClick={() => {
