@@ -20,6 +20,7 @@ import { ArrowLeft, CheckCircle, XCircle, Clock, Trash2, RefreshCw, Pencil, Doll
 import { AllowanceManager } from "@/components/AllowanceManager";
 import WishlistApprovalQueue from "@/components/WishlistApprovalQueue";
 import { SpendingInsights } from "@/components/SpendingInsights";
+import { CashOutDialog } from "@/components/CashOutDialog";
 
 interface Chore {
   id: string;
@@ -313,12 +314,20 @@ const ParentChildDetail = () => {
         {/* Wallet Overview */}
         <Card className="bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-950 dark:to-emerald-900 shadow-lg">
           <CardHeader>
-            <CardTitle className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
-                <DollarSign className="w-6 h-6 text-white" />
-              </div>
-              Total Balance
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
+                  <DollarSign className="w-6 h-6 text-white" />
+                </div>
+                Total Balance
+              </CardTitle>
+              <CashOutDialog
+                childId={childId!}
+                childName={child.name}
+                balances={balances}
+                onCashOutComplete={fetchChildData}
+              />
+            </div>
           </CardHeader>
           <CardContent>
             <p className="text-5xl font-bold mb-6">${formatMoney(getTotalBalance())}</p>
