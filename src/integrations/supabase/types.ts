@@ -499,7 +499,13 @@ export type Database = {
     }
     Enums: {
       chore_status: "PENDING" | "SUBMITTED" | "APPROVED" | "REJECTED"
-      jar_type: "TOYS" | "BOOKS" | "SHOPPING" | "CHARITY" | "WISHLIST"
+      jar_type:
+        | "TOYS"
+        | "BOOKS"
+        | "SHOPPING"
+        | "CHARITY"
+        | "WISHLIST"
+        | "SAVINGS"
       transaction_type:
         | "CHORE_REWARD"
         | "ALLOWANCE_SPLIT"
@@ -635,7 +641,7 @@ export const Constants = {
   public: {
     Enums: {
       chore_status: ["PENDING", "SUBMITTED", "APPROVED", "REJECTED"],
-      jar_type: ["TOYS", "BOOKS", "SHOPPING", "CHARITY", "WISHLIST"],
+      jar_type: ["TOYS", "BOOKS", "SHOPPING", "CHARITY", "WISHLIST", "SAVINGS"],
       transaction_type: [
         "CHORE_REWARD",
         "ALLOWANCE_SPLIT",
