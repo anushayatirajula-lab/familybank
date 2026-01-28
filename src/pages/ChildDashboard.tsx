@@ -6,8 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle, Clock, Star, LogOut, ArrowLeft } from "lucide-react";
-import coinIcon from "@/assets/coin-icon.png";
+import { CheckCircle, Clock, LogOut, ArrowLeft, DollarSign } from "lucide-react";
 import AICoach from "@/components/AICoach";
 
 interface Chore {
@@ -173,7 +172,7 @@ const ChildDashboard = () => {
 
       toast({
         title: "Chore submitted!",
-        description: "Waiting for parent approval to earn tokens.",
+        description: "Waiting for parent approval to earn your reward.",
       });
     } catch (error) {
       console.error("Error submitting chore:", error);
@@ -189,8 +188,8 @@ const ChildDashboard = () => {
     return balances.reduce((sum, b) => sum + Number(b.amount), 0);
   };
 
-  const tokensToMoney = (tokens: number) => {
-    return (tokens / 10).toFixed(2);
+  const formatMoney = (amount: number) => {
+    return (amount / 10).toFixed(2);
   };
 
   const getJarColor = (jarType: string) => {
@@ -258,29 +257,28 @@ const ChildDashboard = () => {
 
           <TabsContent value="dashboard" className="space-y-6">
             {/* Wallet Card */}
-            <Card className="bg-gradient-coin shadow-coin">
+            <Card className="bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-950 dark:to-emerald-900 shadow-lg">
               <CardHeader>
                 <CardTitle className="flex items-center gap-3">
-                  <img src={coinIcon} alt="Coin" className="w-10 h-10 animate-bounce-subtle" />
+                  <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
+                    <DollarSign className="w-6 h-6 text-white" />
+                  </div>
                   Your Wallet
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-5xl font-bold mb-2">${tokensToMoney(getTotalBalance())}</p>
-                <p className="text-sm text-muted-foreground mb-6">{getTotalBalance().toFixed(0)} tokens saved</p>
+                <p className="text-5xl font-bold mb-2">${formatMoney(getTotalBalance())}</p>
+                <p className="text-sm text-muted-foreground mb-6">Total savings</p>
                 
                 {/* Jars */}
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                   {balances.map((balance) => (
                     <div key={balance.jar_type} className="text-center">
                       <div className={`w-full h-16 rounded-lg ${getJarColor(balance.jar_type)} mb-2 flex items-center justify-center text-white font-bold`}>
-                        ${tokensToMoney(Number(balance.amount))}
+                        ${formatMoney(Number(balance.amount))}
                       </div>
                       <p className="text-xs text-muted-foreground capitalize">
                         {balance.jar_type.toLowerCase()}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {Number(balance.amount).toFixed(0)} tokens
                       </p>
                     </div>
                   ))}
@@ -293,7 +291,7 @@ const ChildDashboard = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Your Chores</CardTitle>
-                <CardDescription>Complete chores to earn more tokens!</CardDescription>
+                <CardDescription>Complete chores to earn more money!</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -325,9 +323,9 @@ const ChildDashboard = () => {
                           </div>
                         </div>
                         <div className="flex items-center gap-3">
-                          <Badge className="bg-gradient-coin">
-                            <Star className="w-3 h-3 mr-1" />
-                            ${tokensToMoney(Number(chore.token_reward))}
+                          <Badge className="bg-green-500 hover:bg-green-600">
+                            <DollarSign className="w-3 h-3 mr-1" />
+                            {formatMoney(Number(chore.token_reward))}
                           </Badge>
                           {chore.status === "PENDING" && (
                             <Button

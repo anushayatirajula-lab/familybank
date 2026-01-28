@@ -5,9 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { LogOut, Plus, CheckCircle2, Clock, ArrowLeft, Key, Copy, CreditCard, RefreshCw, Trash2 } from "lucide-react";
+import { LogOut, Plus, CheckCircle2, Clock, ArrowLeft, Key, Copy, CreditCard, RefreshCw, Trash2, DollarSign } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import coinIcon from "@/assets/coin-icon.png";
 import { useSubscription } from "@/hooks/use-subscription";
 import { SubscriptionBanner } from "@/components/SubscriptionBanner";
 import { NotificationPrompt } from "@/components/NotificationPrompt";
@@ -214,6 +213,10 @@ const ParentDashboard = () => {
     return child.balances.reduce((sum, b) => sum + Number(b.amount), 0);
   };
 
+  const formatMoney = (amount: number) => {
+    return (amount / 10).toFixed(2);
+  };
+
   const getPendingChores = (child: Child) => {
     if (!child.chores) return 0;
     return child.chores.filter((c) => c.status === "SUBMITTED").length;
@@ -395,13 +398,15 @@ const ParentDashboard = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {/* Total Balance */}
-                  <div className="flex items-center justify-between p-3 bg-gradient-coin rounded-lg">
+                  <div className="flex items-center justify-between p-3 bg-gradient-to-r from-green-50 to-emerald-100 dark:from-green-950 dark:to-emerald-900 rounded-lg">
                     <div className="flex items-center gap-2">
-                      <img src={coinIcon} alt="Coin" className="w-8 h-8 animate-coin-flip" />
+                      <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center">
+                        <DollarSign className="w-5 h-5 text-white" />
+                      </div>
                       <span className="font-semibold">Total Balance</span>
                     </div>
                     <span className="text-2xl font-bold">
-                      {getTotalBalance(child).toFixed(2)}
+                      ${formatMoney(getTotalBalance(child))}
                     </span>
                   </div>
 

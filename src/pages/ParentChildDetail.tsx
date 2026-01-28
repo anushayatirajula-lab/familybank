@@ -16,8 +16,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, CheckCircle, XCircle, Clock, Trash2, RefreshCw, Pencil } from "lucide-react";
-import coinIcon from "@/assets/coin-icon.png";
+import { ArrowLeft, CheckCircle, XCircle, Clock, Trash2, RefreshCw, Pencil, DollarSign } from "lucide-react";
 import { AllowanceManager } from "@/components/AllowanceManager";
 import WishlistApprovalQueue from "@/components/WishlistApprovalQueue";
 import { SpendingInsights } from "@/components/SpendingInsights";
@@ -141,7 +140,7 @@ const ParentChildDetail = () => {
             body: {
               userId: child.user_id,
               title: "Chore Approved! 🎉",
-              body: `Your chore has been approved! ${tokenReward} tokens added to your jars.`,
+              body: `Your chore has been approved! $${formatMoney(tokenReward)} added to your jars.`,
               url: `/child/${childId}`,
             },
           });
@@ -153,7 +152,7 @@ const ParentChildDetail = () => {
 
       toast({
         title: "Chore approved!",
-        description: "Tokens have been distributed to the child's jars.",
+        description: "The reward has been distributed to the child's jars.",
       });
     } catch (error) {
       console.error("Error approving chore:", error);
@@ -217,8 +216,8 @@ const ParentChildDetail = () => {
     return balances.reduce((sum, b) => sum + Number(b.amount), 0);
   };
 
-  const tokensToMoney = (tokens: number) => {
-    return (tokens / 10).toFixed(2);
+  const formatMoney = (amount: number) => {
+    return (amount / 10).toFixed(2);
   };
 
   const handleDeleteChild = async () => {
@@ -312,28 +311,26 @@ const ParentChildDetail = () => {
 
       <div className="container mx-auto px-4 py-8 space-y-6">
         {/* Wallet Overview */}
-        <Card className="bg-gradient-coin shadow-coin">
+        <Card className="bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-950 dark:to-emerald-900 shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-3">
-              <img src={coinIcon} alt="Coin" className="w-10 h-10 animate-bounce-subtle" />
+              <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
+                <DollarSign className="w-6 h-6 text-white" />
+              </div>
               Total Balance
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-5xl font-bold mb-2">${tokensToMoney(getTotalBalance())}</p>
-            <p className="text-sm text-muted-foreground mb-6">{getTotalBalance().toFixed(0)} tokens</p>
+            <p className="text-5xl font-bold mb-6">${formatMoney(getTotalBalance())}</p>
             
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               {balances.map((balance) => (
                 <div key={balance.jar_type} className="text-center">
                   <div className={`w-full h-16 rounded-lg ${getJarColor(balance.jar_type)} mb-2 flex items-center justify-center text-white font-bold`}>
-                    ${tokensToMoney(Number(balance.amount))}
+                    ${formatMoney(Number(balance.amount))}
                   </div>
                   <p className="text-xs text-muted-foreground capitalize">
                     {balance.jar_type.toLowerCase()}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {Number(balance.amount).toFixed(0)} tokens
                   </p>
                 </div>
               ))}
@@ -391,8 +388,8 @@ const ParentChildDetail = () => {
                         <p className="text-sm text-muted-foreground ml-8">{chore.description}</p>
                       )}
                       <div className="flex items-center gap-4 mt-2 ml-8 flex-wrap">
-                        <Badge className="bg-gradient-coin">
-                          ${tokensToMoney(Number(chore.token_reward))}
+                        <Badge className="bg-green-500 hover:bg-green-600">
+                          ${formatMoney(Number(chore.token_reward))}
                         </Badge>
                         <Badge variant="outline">{chore.status}</Badge>
                         {chore.is_recurring && (

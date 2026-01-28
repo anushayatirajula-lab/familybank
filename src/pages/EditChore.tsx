@@ -186,13 +186,8 @@ const EditChore = () => {
                   placeholder="5.00"
                   required
                 />
-                {tokenReward && parseFloat(tokenReward) > 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    = {moneyToTokens(parseFloat(tokenReward)).toFixed(0)} tokens
-                  </p>
-                )}
                 <p className="text-sm text-muted-foreground">
-                  Tokens will be automatically split into jars when approved
+                  This amount will be automatically split into jars when approved
                 </p>
               </div>
 
