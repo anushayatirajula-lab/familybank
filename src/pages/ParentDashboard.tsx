@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { LogOut, Plus, CheckCircle2, Clock, ArrowLeft, Key, Copy, CreditCard, RefreshCw } from "lucide-react";
+import { LogOut, Plus, CheckCircle2, Clock, ArrowLeft, Key, Copy, CreditCard, RefreshCw, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import coinIcon from "@/assets/coin-icon.png";
 import { useSubscription } from "@/hooks/use-subscription";
@@ -181,6 +181,34 @@ const ParentDashboard = () => {
     }
   };
 
+  const handleCleanupOldChores = async () => {
+    try {
+      toast({
+        title: "Processing...",
+        description: "Cleaning up old approved chores.",
+      });
+
+      const { data, error } = await supabase.functions.invoke("cleanup-old-chores");
+
+      if (error) throw error;
+
+      toast({
+        title: "Success!",
+        description: data?.message || "Old chores cleaned up successfully.",
+      });
+
+      // Refresh dashboard data
+      fetchDashboardData();
+    } catch (error) {
+      console.error("Error cleaning up old chores:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to cleanup old chores.",
+      });
+    }
+  };
+
   const getTotalBalance = (child: Child) => {
     if (!child.balances) return 0;
     return child.balances.reduce((sum, b) => sum + Number(b.amount), 0);
@@ -321,6 +349,10 @@ const ParentDashboard = () => {
               <Button onClick={handleGenerateRecurringChores} variant="outline" size="lg">
                 <RefreshCw className="mr-2 h-5 w-5" />
                 Generate Recurring Chores
+              </Button>
+              <Button onClick={handleCleanupOldChores} variant="outline" size="lg">
+                <Trash2 className="mr-2 h-5 w-5" />
+                Cleanup Old Chores
               </Button>
             </div>
 
