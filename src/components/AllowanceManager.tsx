@@ -225,7 +225,7 @@ export const AllowanceManager = ({ childId, childName }: AllowanceManagerProps) 
               />
               {amount && parseFloat(amount) > 0 && (
                 <p className="text-xs text-muted-foreground">
-                  = {moneyToTokens(parseFloat(amount)).toFixed(0)} tokens
+                  Will be distributed across jars
                 </p>
               )}
             </div>
@@ -279,7 +279,7 @@ export const AllowanceManager = ({ childId, childName }: AllowanceManagerProps) 
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {allowance.weekly_amount.toFixed(0)} tokens • Next: {new Date(allowance.next_payment_at).toLocaleDateString()}
+                    Next payment: {new Date(allowance.next_payment_at).toLocaleDateString()}
                   </p>
                 </div>
                 <div className="flex gap-2">
