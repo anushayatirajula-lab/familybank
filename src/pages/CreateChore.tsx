@@ -130,7 +130,7 @@ const CreateChore = () => {
           <CardHeader>
             <CardTitle>Create a New Chore</CardTitle>
             <CardDescription>
-              Assign a task for your child to complete and earn tokens
+              Assign a task for your child to complete and earn money
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -185,13 +185,8 @@ const CreateChore = () => {
                   placeholder="5.00"
                   required
                 />
-                {tokenReward && parseFloat(tokenReward) > 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    = {moneyToTokens(parseFloat(tokenReward)).toFixed(0)} tokens
-                  </p>
-                )}
                 <p className="text-sm text-muted-foreground">
-                  Tokens will be automatically split into jars when approved
+                  This amount will be automatically split into jars when approved
                 </p>
               </div>
 
