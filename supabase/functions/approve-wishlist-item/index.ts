@@ -4,7 +4,7 @@ import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 interface ApproveWishlistRequest {
@@ -19,6 +19,39 @@ serve(async (req: Request) => {
   }
 
   try {
+    // 1. Verify authentication - get the auth header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      console.error("Missing or invalid authorization header");
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - Missing authorization' }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // 2. Create authenticated client to verify user
+    const supabaseAuth = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    // 3. Verify the user and get their ID using getClaims for proper JWT validation
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
+    
+    if (claimsError || !claimsData?.claims?.sub) {
+      console.error("Failed to verify user:", claimsError);
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - Invalid token' }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const userId = claimsData.claims.sub;
+    console.log("Authenticated user:", userId);
+
+    // 4. Create service role client for database operations
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
@@ -26,9 +59,16 @@ serve(async (req: Request) => {
 
     const { wishlist_item_id }: ApproveWishlistRequest = await req.json();
 
+    if (!wishlist_item_id) {
+      return new Response(
+        JSON.stringify({ error: 'Missing wishlist_item_id' }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     console.log("Processing wishlist approval for item:", wishlist_item_id);
 
-    // Get wishlist item details
+    // 5. Get wishlist item details with child and parent info
     const { data: wishlistItem, error: itemError } = await supabase
       .from("wishlist_items")
       .select(`
@@ -44,10 +84,26 @@ serve(async (req: Request) => {
       .single();
 
     if (itemError || !wishlistItem) {
-      throw new Error("Wishlist item not found");
+      console.error("Wishlist item not found:", itemError);
+      return new Response(
+        JSON.stringify({ error: 'Wishlist item not found' }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const child = wishlistItem.children;
+
+    // 6. CRITICAL: Verify the authenticated user is the parent of this child
+    if (child.parent_id !== userId) {
+      console.error(`Authorization failed: user ${userId} attempted to approve item for parent ${child.parent_id}`);
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - Only the parent can approve this wishlist item' }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log(`User ${userId} authorized to approve wishlist item ${wishlist_item_id}`);
+
     const parentEmail = child.profiles?.email;
     const amount = wishlistItem.target_amount;
 
@@ -62,7 +118,10 @@ serve(async (req: Request) => {
       .single();
 
     if (balanceError || !balance || balance.amount < amount) {
-      throw new Error("Insufficient balance in WISHLIST jar");
+      return new Response(
+        JSON.stringify({ error: 'Insufficient balance in WISHLIST jar' }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     console.log("Current balance:", balance.amount);
