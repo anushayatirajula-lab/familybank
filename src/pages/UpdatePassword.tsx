@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -138,9 +138,8 @@ const UpdatePassword = () => {
           <form onSubmit={handleUpdatePassword} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="password">New Password</Label>
-              <Input
+              <PasswordInput
                 id="password"
-                type="password"
                 placeholder="Min. 6 characters"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -150,9 +149,8 @@ const UpdatePassword = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm New Password</Label>
-              <Input
+              <PasswordInput
                 id="confirmPassword"
-                type="password"
                 placeholder="Re-enter password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
