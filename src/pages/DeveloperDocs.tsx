@@ -143,7 +143,7 @@ const DeveloperDocs = () => {
                     <div>• name: text</div>
                     <div>• age: integer</div>
                     <div>• avatar_url: text</div>
-                    <div>• initial_password: text (for first login)</div>
+                    
                     <div>• first_login: boolean (default: true)</div>
                     <div>• ai_tips_enabled: boolean (default: true)</div>
                     <div>• daily_spend_limit: numeric (default: 10.00)</div>
