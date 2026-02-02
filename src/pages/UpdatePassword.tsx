@@ -82,11 +82,11 @@ const UpdatePassword = () => {
 
       if (error) throw error;
 
-      // If this is a child's first login, update the first_login flag and clear initial_password
+      // If this is a child's first login, update the first_login flag
       if (isFirstLogin && isChild && childId) {
         const { error: updateError } = await supabase
           .from("children")
-          .update({ first_login: false, initial_password: null })
+          .update({ first_login: false })
           .eq("id", childId);
 
         if (updateError) {
