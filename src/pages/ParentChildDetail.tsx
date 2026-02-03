@@ -22,6 +22,8 @@ import WishlistApprovalQueue from "@/components/WishlistApprovalQueue";
 import { SpendingInsights } from "@/components/SpendingInsights";
 import { CashOutDialog } from "@/components/CashOutDialog";
 import { JarPercentageEditor } from "@/components/JarPercentageEditor";
+import { EditChildProfile } from "@/components/EditChildProfile";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface Chore {
   id: string;
@@ -306,8 +308,27 @@ const ParentChildDetail = () => {
               </AlertDialogContent>
             </AlertDialog>
           </div>
-          <h1 className="text-3xl font-bold">{child.name}'s Profile</h1>
-          {child.age && <p className="text-muted-foreground">Age {child.age}</p>}
+          <div className="flex items-center gap-4">
+            <Avatar className="h-14 w-14 md:h-16 md:w-16">
+              <AvatarImage src={child.avatar_url || undefined} alt={child.name} />
+              <AvatarFallback className="text-xl md:text-2xl bg-primary/10">
+                {child.name.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-2xl md:text-3xl font-bold">{child.name}'s Profile</h1>
+                <EditChildProfile
+                  childId={childId!}
+                  childName={child.name}
+                  childAge={child.age}
+                  avatarUrl={child.avatar_url}
+                  onUpdate={fetchChildData}
+                />
+              </div>
+              {child.age && <p className="text-muted-foreground">Age {child.age}</p>}
+            </div>
+          </div>
         </div>
       </header>
 
