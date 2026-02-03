@@ -221,43 +221,43 @@ export const SpendingInsights = ({ childId }: SpendingInsightsProps) => {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Summary Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="p-4 rounded-lg bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800">
-            <div className="flex items-center gap-2 text-green-600 dark:text-green-400 mb-1">
-              <TrendingUp className="h-4 w-4" />
-              <span className="text-sm font-medium">Earnings (30d)</span>
+        <div className="grid grid-cols-2 gap-2 md:gap-4">
+          <div className="p-2 md:p-4 rounded-lg bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800">
+            <div className="flex items-center gap-1 md:gap-2 text-green-600 dark:text-green-400 mb-1">
+              <TrendingUp className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
+              <span className="text-xs md:text-sm font-medium truncate">Earnings (30d)</span>
             </div>
-            <p className="text-2xl font-bold text-green-700 dark:text-green-300">
+            <p className="text-lg md:text-2xl font-bold text-green-700 dark:text-green-300">
               ${stats.totalEarnings.toFixed(2)}
             </p>
           </div>
 
-          <div className="p-4 rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800">
-            <div className="flex items-center gap-2 text-red-600 dark:text-red-400 mb-1">
-              <TrendingDown className="h-4 w-4" />
-              <span className="text-sm font-medium">Spending (30d)</span>
+          <div className="p-2 md:p-4 rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800">
+            <div className="flex items-center gap-1 md:gap-2 text-red-600 dark:text-red-400 mb-1">
+              <TrendingDown className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
+              <span className="text-xs md:text-sm font-medium truncate">Spending (30d)</span>
             </div>
-            <p className="text-2xl font-bold text-red-700 dark:text-red-300">
+            <p className="text-lg md:text-2xl font-bold text-red-700 dark:text-red-300">
               ${stats.totalSpending.toFixed(2)}
             </p>
           </div>
 
-          <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800">
-            <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 mb-1">
-              <DollarSign className="h-4 w-4" />
-              <span className="text-sm font-medium">Balance</span>
+          <div className="p-2 md:p-4 rounded-lg bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800">
+            <div className="flex items-center gap-1 md:gap-2 text-blue-600 dark:text-blue-400 mb-1">
+              <DollarSign className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
+              <span className="text-xs md:text-sm font-medium truncate">Balance</span>
             </div>
-            <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+            <p className="text-lg md:text-2xl font-bold text-blue-700 dark:text-blue-300">
               ${stats.totalBalance.toFixed(2)}
             </p>
           </div>
 
-          <div className="p-4 rounded-lg bg-purple-50 dark:bg-purple-950 border border-purple-200 dark:border-purple-800">
-            <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400 mb-1">
-              <PiggyBank className="h-4 w-4" />
-              <span className="text-sm font-medium">Savings Rate</span>
+          <div className="p-2 md:p-4 rounded-lg bg-purple-50 dark:bg-purple-950 border border-purple-200 dark:border-purple-800">
+            <div className="flex items-center gap-1 md:gap-2 text-purple-600 dark:text-purple-400 mb-1">
+              <PiggyBank className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
+              <span className="text-xs md:text-sm font-medium truncate">Savings Rate</span>
             </div>
-            <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">
+            <p className="text-lg md:text-2xl font-bold text-purple-700 dark:text-purple-300">
               {stats.savingsRate.toFixed(0)}%
             </p>
           </div>
@@ -266,9 +266,9 @@ export const SpendingInsights = ({ childId }: SpendingInsightsProps) => {
         {/* Charts */}
         <Tabs defaultValue="trend" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="trend">Balance Trend</TabsTrigger>
-            <TabsTrigger value="jars">Jar Distribution</TabsTrigger>
-            <TabsTrigger value="earnings">Earnings</TabsTrigger>
+            <TabsTrigger value="trend" className="text-xs md:text-sm px-1 md:px-3">Trend</TabsTrigger>
+            <TabsTrigger value="jars" className="text-xs md:text-sm px-1 md:px-3">Jars</TabsTrigger>
+            <TabsTrigger value="earnings" className="text-xs md:text-sm px-1 md:px-3">Earnings</TabsTrigger>
           </TabsList>
 
           <TabsContent value="trend" className="mt-4">
