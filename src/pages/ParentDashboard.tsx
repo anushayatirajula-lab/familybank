@@ -77,7 +77,7 @@ const ParentDashboard = () => {
 
       // Get profile
       const { data: profile } = await supabase
-        .from("profiles")
+        .from("profiles_public")
         .select("full_name")
         .eq("id", user.id)
         .single();

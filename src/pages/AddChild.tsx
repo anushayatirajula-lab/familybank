@@ -69,7 +69,7 @@ const AddChild = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const { data: profile } = await supabase
-          .from("profiles")
+          .from("profiles_public")
           .select("family_code")
           .eq("id", user.id)
           .single();
