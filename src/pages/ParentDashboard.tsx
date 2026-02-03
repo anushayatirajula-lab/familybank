@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LogOut, Plus, CheckCircle2, Clock, ArrowLeft, CreditCard, RefreshCw, Trash2, DollarSign } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { useSubscription } from "@/hooks/use-subscription";
 import { SubscriptionBanner } from "@/components/SubscriptionBanner";
@@ -293,14 +294,28 @@ const ParentDashboard = () => {
                 <Plus className="h-4 w-4 shrink-0" />
                 <span className="text-xs sm:text-sm truncate">Create Chore</span>
               </Button>
-              <Button onClick={handleGenerateRecurringChores} variant="outline" className="w-full h-auto py-2.5 px-2 flex items-center justify-center gap-1.5">
-                <RefreshCw className="h-4 w-4 shrink-0" />
-                <span className="text-xs sm:text-sm truncate">Recurring</span>
-              </Button>
-              <Button onClick={handleCleanupOldChores} variant="outline" className="w-full h-auto py-2.5 px-2 flex items-center justify-center gap-1.5">
-                <Trash2 className="h-4 w-4 shrink-0" />
-                <span className="text-xs sm:text-sm truncate">Cleanup</span>
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button onClick={handleGenerateRecurringChores} variant="outline" className="w-full h-auto py-2.5 px-2 flex items-center justify-center gap-1.5">
+                    <RefreshCw className="h-4 w-4 shrink-0" />
+                    <span className="text-xs sm:text-sm truncate">Recurring</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Generate today's chores from recurring templates</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button onClick={handleCleanupOldChores} variant="outline" className="w-full h-auto py-2.5 px-2 flex items-center justify-center gap-1.5">
+                    <Trash2 className="h-4 w-4 shrink-0" />
+                    <span className="text-xs sm:text-sm truncate">Cleanup</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Delete approved chores older than 30 days</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
 
         {/* Children Overview */}
