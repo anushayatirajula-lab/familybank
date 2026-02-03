@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.get-vapid-key]
 verify_jwt = false
+
+[functions.reset-child-password]
+verify_jwt = false

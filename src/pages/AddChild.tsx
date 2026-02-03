@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -41,12 +41,15 @@ const AddChild = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [age, setAge] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showCredentials, setShowCredentials] = useState(false);
-  const [credentials, setCredentials] = useState({ email: "", childName: "" });
-  const [copiedEmail, setCopiedEmail] = useState(false);
+  const [credentials, setCredentials] = useState({ username: "", familyCode: "", childName: "" });
+  const [copiedCode, setCopiedCode] = useState(false);
+  const [copiedUsername, setCopiedUsername] = useState(false);
+  const [familyCode, setFamilyCode] = useState("");
   const [jarPercentages, setJarPercentages] = useState({
     SAVINGS: 30,
     BOOKS: 20,
@@ -58,14 +61,38 @@ const AddChild = () => {
   const passwordStrength = useMemo(() => getPasswordStrength(password), [password]);
   const isPasswordValid = password.length >= 8 && passwordStrength.score >= 40;
   const doPasswordsMatch = password === confirmPassword;
+  const isUsernameValid = /^[a-zA-Z0-9_]{3,20}$/.test(username);
 
-  const copyToClipboard = async (text: string) => {
+  // Fetch family code on mount
+  useEffect(() => {
+    const fetchFamilyCode = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("family_code")
+          .eq("id", user.id)
+          .single();
+        if (profile?.family_code) {
+          setFamilyCode(profile.family_code);
+        }
+      }
+    };
+    fetchFamilyCode();
+  }, []);
+
+  const copyToClipboard = async (text: string, type: 'code' | 'username') => {
     await navigator.clipboard.writeText(text);
-    setCopiedEmail(true);
-    setTimeout(() => setCopiedEmail(false), 2000);
+    if (type === 'code') {
+      setCopiedCode(true);
+      setTimeout(() => setCopiedCode(false), 2000);
+    } else {
+      setCopiedUsername(true);
+      setTimeout(() => setCopiedUsername(false), 2000);
+    }
     toast({
       title: "Copied!",
-      description: "Email copied to clipboard",
+      description: `${type === 'code' ? 'Family code' : 'Username'} copied to clipboard`,
     });
   };
 
@@ -117,6 +144,15 @@ const AddChild = () => {
       return;
     }
 
+    if (!isUsernameValid) {
+      toast({
+        variant: "destructive",
+        title: "Invalid username",
+        description: "Username must be 3-20 characters, letters, numbers, and underscores only.",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -127,17 +163,34 @@ const AddChild = () => {
       const { data: { session: parentSession } } = await supabase.auth.getSession();
       if (!parentSession) throw new Error("No active session");
 
-      // Generate email for child with simple 4-digit code (password is set by parent)
-      const uniqueCode = Math.floor(1000 + Math.random() * 9000); // 4-digit code
-      const childEmail = `${name.toLowerCase().replace(/\s+/g, '')}.${uniqueCode}@familybank.app`;
+      // Check if username is already taken within this family
+      const { data: existingChild } = await supabase
+        .from("children")
+        .select("id")
+        .eq("parent_id", user.id)
+        .ilike("name", username);
+      
+      if (existingChild && existingChild.length > 0) {
+        toast({
+          variant: "destructive",
+          title: "Username taken",
+          description: "You already have a child with this username. Please choose a different one.",
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Generate internal email using family code and username (hidden from user)
+      const internalEmail = `${username.toLowerCase()}_${familyCode.toLowerCase()}@familybank.internal`;
       
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: childEmail,
-        password: password, // Use parent-set password
+        email: internalEmail,
+        password: password,
         options: {
           data: {
             display_name: name,
-            role: 'CHILD'
+            role: 'CHILD',
+            username: username
           }
         }
       });
@@ -151,7 +204,7 @@ const AddChild = () => {
         refresh_token: parentSession.refresh_token
       });
 
-      // Create child profile (password is shown once and NOT stored for security)
+      // Create child profile with username
       const { data: child, error: childError } = await supabase
         .from("children")
         .insert({
@@ -191,16 +244,17 @@ const AddChild = () => {
 
       if (balancesError) throw balancesError;
 
-      // Show credentials dialog (only email - parent already knows the password)
+      // Show credentials dialog with username and family code
       setCredentials({
-        email: childEmail,
+        username: username,
+        familyCode: familyCode,
         childName: name
       });
       setShowCredentials(true);
 
       toast({
         title: "Child added!",
-        description: `${name} has been added successfully. Note the login email below.`,
+        description: `${name} has been added successfully. Note the login details below.`,
       });
     } catch (error: any) {
       console.error("Error adding child:", error);
@@ -224,15 +278,37 @@ const AddChild = () => {
           <DialogHeader>
             <DialogTitle>🎉 Child Account Created!</DialogTitle>
             <DialogDescription>
-              Share the login email with {credentials.childName}. They'll use the password you just set.
+              Share these login details with {credentials.childName}.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Login Email</Label>
+              <Label className="text-sm font-medium">Family Code</Label>
               <div className="flex items-center gap-2">
                 <Input
-                  value={credentials.email}
+                  value={credentials.familyCode}
+                  readOnly
+                  className="flex-1 font-mono text-lg font-bold tracking-widest"
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => copyToClipboard(credentials.familyCode, 'code')}
+                >
+                  {copiedCode ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Your child enters this once on their device to connect to your family
+              </p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Username</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  value={credentials.username}
                   readOnly
                   className="flex-1 font-mono text-sm"
                 />
@@ -240,20 +316,32 @@ const AddChild = () => {
                   type="button"
                   size="sm"
                   variant="outline"
-                  onClick={() => copyToClipboard(credentials.email)}
+                  onClick={() => copyToClipboard(credentials.username, 'username')}
                 >
-                  {copiedEmail ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  {copiedUsername ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
             </div>
+            
             <div className="rounded-lg bg-primary/10 p-4 border border-primary/30">
               <p className="text-sm font-medium">
                 ✅ <strong>Password Set</strong>
               </p>
               <p className="text-sm text-muted-foreground mt-1">
-                You set the password during setup. Share it with {credentials.childName} so they can log in at the child login page.
+                You set the password during setup. Share it with {credentials.childName} so they can log in.
               </p>
             </div>
+            
+            <div className="rounded-lg bg-muted p-4">
+              <p className="text-sm font-medium mb-2">📱 Child Login Steps:</p>
+              <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
+                <li>Go to child login page</li>
+                <li>Enter family code: <strong>{credentials.familyCode}</strong> (first time only)</li>
+                <li>Enter username: <strong>{credentials.username}</strong></li>
+                <li>Enter password you set</li>
+              </ol>
+            </div>
+            
             <Button onClick={() => {
               setShowCredentials(false);
               navigate("/parent/dashboard");
@@ -285,14 +373,39 @@ const AddChild = () => {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="name">Child's Name *</Label>
+                <Label htmlFor="name">Child's Display Name *</Label>
                 <Input
                   id="name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Enter name"
+                  placeholder="Enter display name (e.g., Alex)"
                   required
                 />
+                <p className="text-xs text-muted-foreground">
+                  This is how your child's name will appear in the app
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="username">Username *</Label>
+                <Input
+                  id="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                  placeholder="Enter username (e.g., alex_smith)"
+                  required
+                  className="font-mono"
+                  maxLength={20}
+                />
+                {username && !isUsernameValid && (
+                  <p className="text-sm text-destructive">3-20 characters, letters, numbers, underscores only</p>
+                )}
+                {username && isUsernameValid && (
+                  <p className="text-sm text-green-600">✓ Valid username</p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Your child will use this to log in
+                </p>
               </div>
 
               <div className="space-y-2">
@@ -309,12 +422,34 @@ const AddChild = () => {
                   className="text-base"
                 />
               </div>
+              
+              {familyCode && (
+                <div className="rounded-lg bg-muted p-4 border">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm font-medium">Your Family Code</Label>
+                      <p className="text-2xl font-mono font-bold tracking-widest">{familyCode}</p>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => copyToClipboard(familyCode, 'code')}
+                    >
+                      {copiedCode ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    All your children use this same code to connect to your family
+                  </p>
+                </div>
+              )}
 
               <div className="space-y-4 rounded-lg border p-4 bg-muted/30">
                 <div>
                   <Label className="text-base">Set Child's Password *</Label>
                   <p className="text-sm text-muted-foreground">
-                    Create a password your child will use to log in. An email will be auto-generated.
+                    Create a password your child will use to log in with their username.
                   </p>
                 </div>
                 
@@ -402,7 +537,7 @@ const AddChild = () => {
               <Button 
                 type="submit" 
                 className="w-full" 
-                disabled={loading || getTotalPercentage() !== 100 || !isPasswordValid || !doPasswordsMatch}
+                disabled={loading || getTotalPercentage() !== 100 || !isPasswordValid || !doPasswordsMatch || !isUsernameValid}
               >
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Add Child
