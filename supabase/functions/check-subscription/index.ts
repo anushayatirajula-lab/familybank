@@ -12,6 +12,8 @@ const logStep = (step: string, details?: any) => {
   console.log(`[CHECK-SUBSCRIPTION] ${step}${detailsStr}`);
 };
 
+const TRIAL_DAYS = 60;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -76,6 +78,27 @@ serve(async (req) => {
 
     logStep("Profile retrieved", { profile });
 
+    // Check if this is the first login (trial_ends_at is null)
+    // If so, start the trial now
+    let trialEndsAt = profile?.trial_ends_at;
+    
+    if (!trialEndsAt) {
+      // First login - start the trial period now
+      const trialEndDate = new Date();
+      trialEndDate.setDate(trialEndDate.getDate() + TRIAL_DAYS);
+      trialEndsAt = trialEndDate.toISOString();
+      
+      logStep("First login detected, starting trial", { trialEndsAt });
+      
+      await supabaseClient
+        .from('profiles')
+        .update({ 
+          trial_ends_at: trialEndsAt,
+          subscription_status: 'trialing'
+        })
+        .eq('id', userId);
+    }
+
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", { 
       apiVersion: "2025-08-27.basil" 
     });
@@ -86,7 +109,7 @@ serve(async (req) => {
     if (customers.data.length === 0) {
       // No customer in Stripe, check trial status
       const now = new Date();
-      const trialEnds = profile?.trial_ends_at ? new Date(profile.trial_ends_at) : null;
+      const trialEnds = trialEndsAt ? new Date(trialEndsAt) : null;
       const isTrialActive = trialEnds && now < trialEnds;
 
       logStep("No Stripe customer, checking trial", { isTrialActive, trialEnds });
@@ -123,7 +146,7 @@ serve(async (req) => {
     
     if (!subscription) {
       const now = new Date();
-      const trialEnds = profile?.trial_ends_at ? new Date(profile.trial_ends_at) : null;
+      const trialEnds = trialEndsAt ? new Date(trialEndsAt) : null;
       const isTrialActive = trialEnds && now < trialEnds;
 
       logStep("No subscription found, checking trial", { isTrialActive });
