@@ -180,12 +180,10 @@ export default function WishlistApprovalQueue({ childId }: WishlistApprovalQueue
 
   if (items.length === 0) {
     return (
-      <Card>
-        <CardContent className="flex flex-col items-center justify-center py-12">
-          <ShoppingBag className="w-12 h-12 text-muted-foreground mb-3" />
-          <p className="text-muted-foreground">No pending wishlist items</p>
-        </CardContent>
-      </Card>
+      <div className="flex flex-col items-center justify-center py-8">
+        <ShoppingBag className="w-10 h-10 text-muted-foreground mb-2" />
+        <p className="text-sm text-muted-foreground">No pending wishlist items</p>
+      </div>
     );
   }
 
@@ -197,68 +195,69 @@ export default function WishlistApprovalQueue({ childId }: WishlistApprovalQueue
           const hasEnoughBalance = wishlistBalance >= item.target_amount;
           
           return (
-            <Card key={item.id} className="overflow-hidden">
-              <div className="p-4">
-                {/* Header row: Title + Status */}
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-semibold text-base truncate">{item.title}</h3>
-                      {!childId && (
-                        <Badge variant="outline" className="text-xs shrink-0">
-                          {item.child_name}
-                        </Badge>
-                      )}
-                    </div>
-                    {item.description && (
-                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{item.description}</p>
+            <div key={item.id} className="border rounded-lg p-3 md:p-4 bg-card">
+              {/* Header row: Title + Status */}
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-semibold text-sm md:text-base">{item.title}</h3>
+                    {!childId && (
+                      <Badge variant="outline" className="text-xs">
+                        {item.child_name}
+                      </Badge>
                     )}
                   </div>
-                  <Badge variant="secondary" className="shrink-0 text-xs">Pending</Badge>
+                  {item.description && (
+                    <p className="text-xs md:text-sm text-muted-foreground mt-1 line-clamp-1">{item.description}</p>
+                  )}
                 </div>
+                <Badge variant="secondary" className="shrink-0 text-xs">Pending</Badge>
+              </div>
 
-                {/* Content row: Price info + Actions */}
-                <div className="flex items-center justify-between gap-4 flex-wrap">
-                  <div className="flex items-baseline gap-3 flex-wrap">
-                    <span className="text-xl font-bold text-primary">
-                      ${formatMoney(item.target_amount)}
+              {/* Mobile: Stack layout / Desktop: Row layout */}
+              <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                {/* Price info */}
+                <div className="flex items-baseline gap-2 flex-wrap text-sm">
+                  <span className="text-lg md:text-xl font-bold text-primary">
+                    ${formatMoney(item.target_amount)}
+                  </span>
+                  <span className="text-muted-foreground">
+                    Saved: ${formatMoney(wishlistBalance)}
+                  </span>
+                  {!hasEnoughBalance && (
+                    <span className="text-amber-600 text-xs">
+                      (−${formatMoney(item.target_amount - wishlistBalance)})
                     </span>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <span>Saved: ${formatMoney(wishlistBalance)}</span>
-                      {!hasEnoughBalance && (
-                        <span className="text-amber-600">
-                          (needs ${formatMoney(item.target_amount - wishlistBalance)} more)
-                        </span>
-                      )}
-                      {hasEnoughBalance && (
-                        <span className="text-green-600">✓ Ready</span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex gap-2 shrink-0">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDeny(item)}
-                      disabled={processing}
-                      className="h-8 px-3"
-                    >
-                      <X className="w-3.5 h-3.5 mr-1" />
-                      Deny
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={() => handleApprove(item)}
-                      disabled={processing || !hasEnoughBalance}
-                      className="h-8 px-3"
-                    >
-                      <Check className="w-3.5 h-3.5 mr-1" />
-                      Approve
-                    </Button>
-                  </div>
+                  )}
+                  {hasEnoughBalance && (
+                    <span className="text-green-600 text-xs">✓ Ready</span>
+                  )}
+                </div>
+                
+                {/* Action buttons */}
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDeny(item)}
+                    disabled={processing}
+                    className="h-8 px-3 text-xs flex-1 md:flex-none"
+                  >
+                    <X className="w-3.5 h-3.5 mr-1" />
+                    Deny
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => handleApprove(item)}
+                    disabled={processing || !hasEnoughBalance}
+                    className="h-8 px-3 text-xs flex-1 md:flex-none"
+                  >
+                    <Check className="w-3.5 h-3.5 mr-1" />
+                    Approve
+                  </Button>
                 </div>
               </div>
-            </Card>
+            </div>
           );
         })}
       </div>
