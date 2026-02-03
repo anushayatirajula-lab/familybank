@@ -398,118 +398,240 @@ const ParentChildDetail = () => {
             <CardTitle>Chores</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {chores.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">
-                  No chores created yet.
-                </p>
-              ) : (
-                chores.map((chore) => (
-                  <div
-                    key={chore.id}
-                    className="flex flex-col gap-3 p-3 md:p-4 border rounded-lg"
-                  >
-                    {/* Chore info */}
-                    <div className="flex items-start gap-2">
-                      <div className="flex-shrink-0 mt-0.5">
-                        {chore.status === "APPROVED" && (
-                          <CheckCircle className="w-5 h-5 text-green-600" />
+            {chores.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">
+                No chores created yet.
+              </p>
+            ) : (
+              <>
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b text-left text-sm text-muted-foreground">
+                        <th className="pb-3 font-medium">Chore</th>
+                        <th className="pb-3 font-medium text-center w-24">Reward</th>
+                        <th className="pb-3 font-medium text-center w-28">Status</th>
+                        <th className="pb-3 font-medium text-center w-24">Type</th>
+                        <th className="pb-3 font-medium text-right w-48">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {chores.map((chore) => (
+                        <tr key={chore.id} className="group">
+                          <td className="py-3 pr-4">
+                            <div className="flex items-center gap-3">
+                              <div className="flex-shrink-0">
+                                {chore.status === "APPROVED" && (
+                                  <CheckCircle className="w-5 h-5 text-green-600" />
+                                )}
+                                {chore.status === "SUBMITTED" && (
+                                  <Clock className="w-5 h-5 text-yellow-600" />
+                                )}
+                                {chore.status === "PENDING" && (
+                                  <div className="w-5 h-5 rounded-full border-2 border-muted" />
+                                )}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="font-medium truncate">{chore.title}</p>
+                                {chore.description && (
+                                  <p className="text-sm text-muted-foreground truncate max-w-xs">{chore.description}</p>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-3 text-center">
+                            <Badge className="bg-green-500 hover:bg-green-600">
+                              ${formatMoney(Number(chore.token_reward))}
+                            </Badge>
+                          </td>
+                          <td className="py-3 text-center">
+                            <Badge variant="outline">{chore.status}</Badge>
+                          </td>
+                          <td className="py-3 text-center">
+                            {chore.is_recurring ? (
+                              <Badge variant="secondary" className="gap-1">
+                                <RefreshCw className="h-3 w-3" />
+                                {chore.recurrence_type === "daily" ? "Daily" : "Weekly"}
+                              </Badge>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">One-time</span>
+                            )}
+                          </td>
+                          <td className="py-3 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              {chore.status !== "APPROVED" && (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-8"
+                                    onClick={() => navigate(`/parent/chores/${chore.id}/edit`)}
+                                  >
+                                    <Pencil className="mr-1 h-3 w-3" />
+                                    Edit
+                                  </Button>
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <Button size="sm" variant="destructive" className="h-8">
+                                        <Trash2 className="h-3 w-3" />
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>Delete Chore?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          This will permanently delete "{chore.title}". This action cannot be undone.
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction
+                                          onClick={() => handleDeleteChore(chore.id, chore.title)}
+                                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                        >
+                                          Delete
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </>
+                              )}
+                              {chore.status === "SUBMITTED" && (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    className="h-8"
+                                    onClick={() => handleApproveChore(chore.id, chore.token_reward)}
+                                  >
+                                    <CheckCircle className="mr-1 h-3 w-3" />
+                                    Approve
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-8"
+                                    onClick={() => handleRejectChore(chore.id)}
+                                  >
+                                    <XCircle className="mr-1 h-3 w-3" />
+                                    Reject
+                                  </Button>
+                                </>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile Card View */}
+                <div className="md:hidden space-y-3">
+                  {chores.map((chore) => (
+                    <div
+                      key={chore.id}
+                      className="p-4 border rounded-lg space-y-3"
+                    >
+                      {/* Header with status icon and title */}
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 mt-0.5">
+                          {chore.status === "APPROVED" && (
+                            <CheckCircle className="w-5 h-5 text-green-600" />
+                          )}
+                          {chore.status === "SUBMITTED" && (
+                            <Clock className="w-5 h-5 text-yellow-600" />
+                          )}
+                          {chore.status === "PENDING" && (
+                            <div className="w-5 h-5 rounded-full border-2 border-muted" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold truncate">{chore.title}</h3>
+                          {chore.description && (
+                            <p className="text-sm text-muted-foreground truncate">{chore.description}</p>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Badges row */}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge className="bg-green-500 hover:bg-green-600">
+                          ${formatMoney(Number(chore.token_reward))}
+                        </Badge>
+                        <Badge variant="outline">{chore.status}</Badge>
+                        {chore.is_recurring && (
+                          <Badge variant="secondary" className="gap-1">
+                            <RefreshCw className="h-3 w-3" />
+                            {chore.recurrence_type === "daily" ? "Daily" : "Weekly"}
+                          </Badge>
+                        )}
+                      </div>
+                      
+                      {/* Action buttons */}
+                      <div className="flex gap-2 flex-wrap pt-1">
+                        {chore.status !== "APPROVED" && (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => navigate(`/parent/chores/${chore.id}/edit`)}
+                            >
+                              <Pencil className="mr-1 h-3 w-3" />
+                              Edit
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button size="sm" variant="destructive">
+                                  <Trash2 className="mr-1 h-3 w-3" />
+                                  Delete
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete Chore?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This will permanently delete "{chore.title}". This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDeleteChore(chore.id, chore.title)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </>
                         )}
                         {chore.status === "SUBMITTED" && (
-                          <Clock className="w-5 h-5 text-yellow-600" />
-                        )}
-                        {chore.status === "PENDING" && (
-                          <div className="w-5 h-5 rounded-full border-2 border-muted" />
+                          <>
+                            <Button
+                              size="sm"
+                              onClick={() => handleApproveChore(chore.id, chore.token_reward)}
+                            >
+                              <CheckCircle className="mr-1 h-3 w-3" />
+                              Approve
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleRejectChore(chore.id)}
+                            >
+                              <XCircle className="mr-1 h-3 w-3" />
+                              Reject
+                            </Button>
+                          </>
                         )}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-sm md:text-base truncate">{chore.title}</h3>
-                        {chore.description && (
-                          <p className="text-xs md:text-sm text-muted-foreground truncate">{chore.description}</p>
-                        )}
-                      </div>
                     </div>
-                    
-                    {/* Badges */}
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Badge className="bg-green-500 hover:bg-green-600 text-xs">
-                        ${formatMoney(Number(chore.token_reward))}
-                      </Badge>
-                      <Badge variant="outline" className="text-xs">{chore.status}</Badge>
-                      {chore.is_recurring && (
-                        <Badge variant="secondary" className="flex items-center gap-1 text-xs">
-                          <RefreshCw className="h-3 w-3" />
-                          {chore.recurrence_type === "daily" ? "Daily" : `Weekly`}
-                        </Badge>
-                      )}
-                    </div>
-                    
-                    {/* Action buttons */}
-                    <div className="flex gap-2 flex-wrap">
-                      {chore.status !== "APPROVED" && (
-                        <>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-xs h-8 px-2"
-                            onClick={() => navigate(`/parent/chores/${chore.id}/edit`)}
-                          >
-                            <Pencil className="mr-1 h-3 w-3" />
-                            Edit
-                          </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button size="sm" variant="destructive" className="text-xs h-8 px-2">
-                                <Trash2 className="mr-1 h-3 w-3" />
-                                Delete
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Delete Chore?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  This will permanently delete "{chore.title}". This action cannot be undone.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleDeleteChore(chore.id, chore.title)}
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                >
-                                  Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </>
-                      )}
-                      {chore.status === "SUBMITTED" && (
-                        <>
-                          <Button
-                            size="sm"
-                            className="text-xs h-8 px-2"
-                            onClick={() => handleApproveChore(chore.id, chore.token_reward)}
-                          >
-                            <CheckCircle className="mr-1 h-3 w-3" />
-                            Approve
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-xs h-8 px-2"
-                            onClick={() => handleRejectChore(chore.id)}
-                          >
-                            <XCircle className="mr-1 h-3 w-3" />
-                            Reject
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+                  ))}
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
