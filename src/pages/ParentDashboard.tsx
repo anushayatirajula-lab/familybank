@@ -284,22 +284,22 @@ const ParentDashboard = () => {
         {subscription.isAccessAllowed() && (
           <>
             {/* Quick Actions */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
-              <Button onClick={() => navigate("/parent/children/new")} className="w-full h-auto py-3 flex flex-col items-center gap-1.5 sm:flex-row sm:gap-2">
-                <Plus className="h-5 w-5" />
-                <span className="text-sm">Add Child</span>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-8">
+              <Button onClick={() => navigate("/parent/children/new")} className="w-full h-auto py-2.5 px-2 flex items-center justify-center gap-1.5">
+                <Plus className="h-4 w-4 shrink-0" />
+                <span className="text-xs sm:text-sm truncate">Add Child</span>
               </Button>
-              <Button onClick={() => navigate("/parent/chores/new")} variant="outline" className="w-full h-auto py-3 flex flex-col items-center gap-1.5 sm:flex-row sm:gap-2">
-                <Plus className="h-5 w-5" />
-                <span className="text-sm">Create Chore</span>
+              <Button onClick={() => navigate("/parent/chores/new")} variant="outline" className="w-full h-auto py-2.5 px-2 flex items-center justify-center gap-1.5">
+                <Plus className="h-4 w-4 shrink-0" />
+                <span className="text-xs sm:text-sm truncate">Create Chore</span>
               </Button>
-              <Button onClick={handleGenerateRecurringChores} variant="outline" className="w-full h-auto py-3 flex flex-col items-center gap-1.5 sm:flex-row sm:gap-2">
-                <RefreshCw className="h-5 w-5" />
-                <span className="text-sm text-center leading-tight">Generate Recurring</span>
+              <Button onClick={handleGenerateRecurringChores} variant="outline" className="w-full h-auto py-2.5 px-2 flex items-center justify-center gap-1.5">
+                <RefreshCw className="h-4 w-4 shrink-0" />
+                <span className="text-xs sm:text-sm truncate">Recurring</span>
               </Button>
-              <Button onClick={handleCleanupOldChores} variant="outline" className="w-full h-auto py-3 flex flex-col items-center gap-1.5 sm:flex-row sm:gap-2">
-                <Trash2 className="h-5 w-5" />
-                <span className="text-sm text-center leading-tight">Cleanup Old</span>
+              <Button onClick={handleCleanupOldChores} variant="outline" className="w-full h-auto py-2.5 px-2 flex items-center justify-center gap-1.5">
+                <Trash2 className="h-4 w-4 shrink-0" />
+                <span className="text-xs sm:text-sm truncate">Cleanup</span>
               </Button>
             </div>
 
