@@ -289,12 +289,12 @@ const ChildDashboard = () => {
 
           <TabsContent value="chores">
             <Card>
-              <CardHeader>
-                <CardTitle>Your Chores</CardTitle>
-                <CardDescription>Complete chores to earn more money!</CardDescription>
+              <CardHeader className="pb-2 md:pb-6">
+                <CardTitle className="text-lg md:text-2xl">Your Chores</CardTitle>
+                <CardDescription className="text-xs md:text-sm">Complete chores to earn more money!</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
+              <CardContent className="px-3 md:px-6">
+                <div className="space-y-2 md:space-y-4">
                   {chores.length === 0 ? (
                     <p className="text-center text-muted-foreground py-8">
                       No chores yet. Ask your parent to create some!
@@ -303,40 +303,41 @@ const ChildDashboard = () => {
                     chores.map((chore) => (
                       <div
                         key={chore.id}
-                        className="flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition-all"
+                        className="flex items-center justify-between p-2 md:p-4 border rounded-lg hover:shadow-md transition-all"
                       >
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
                           {chore.status === "APPROVED" && (
-                            <CheckCircle className="w-6 h-6 text-green-600" />
+                            <CheckCircle className="w-5 h-5 md:w-6 md:h-6 text-green-600 flex-shrink-0" />
                           )}
                           {chore.status === "SUBMITTED" && (
-                            <Clock className="w-6 h-6 text-yellow-600" />
+                            <Clock className="w-5 h-5 md:w-6 md:h-6 text-yellow-600 flex-shrink-0" />
                           )}
                           {chore.status === "PENDING" && (
-                            <div className="w-6 h-6 rounded-full border-2 border-muted" />
+                            <div className="w-5 h-5 md:w-6 md:h-6 rounded-full border-2 border-muted flex-shrink-0" />
                           )}
-                          <div>
-                            <h3 className="font-semibold">{chore.title}</h3>
+                          <div className="min-w-0">
+                            <h3 className="font-semibold text-sm md:text-base truncate">{chore.title}</h3>
                             {chore.description && (
-                              <p className="text-sm text-muted-foreground">{chore.description}</p>
+                              <p className="text-xs md:text-sm text-muted-foreground truncate">{chore.description}</p>
                             )}
                           </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <Badge className="bg-green-500 hover:bg-green-600">
-                            <DollarSign className="w-3 h-3 mr-1" />
+                        <div className="flex items-center gap-1.5 md:gap-3 flex-shrink-0 ml-2">
+                          <Badge className="bg-green-500 hover:bg-green-600 text-xs md:text-sm px-1.5 md:px-2.5">
+                            <DollarSign className="w-3 h-3 mr-0.5 md:mr-1" />
                             {formatMoney(Number(chore.token_reward))}
                           </Badge>
                           {chore.status === "PENDING" && (
                             <Button
                               size="sm"
+                              className="text-xs md:text-sm h-7 md:h-9 px-2 md:px-3"
                               onClick={() => handleSubmitChore(chore.id)}
                             >
-                              Mark Done
+                              Done
                             </Button>
                           )}
                           {chore.status === "SUBMITTED" && (
-                            <Badge variant="outline">Waiting for approval</Badge>
+                            <Badge variant="outline" className="text-xs whitespace-nowrap">Pending</Badge>
                           )}
                         </div>
                       </div>
