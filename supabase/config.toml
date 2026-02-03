@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.cleanup-old-chores]
 verify_jwt = false
+
+[functions.get-vapid-key]
+verify_jwt = false

@@ -8,11 +8,36 @@ import { supabase } from "@/integrations/supabase/client";
 export const NotificationPrompt = () => {
   const [showPrompt, setShowPrompt] = useState(false);
   const [isSubscribing, setIsSubscribing] = useState(false);
+  const [vapidPublicKey, setVapidPublicKey] = useState<string | null>(null);
+  const [vapidConfigured, setVapidConfigured] = useState<boolean | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    checkNotificationPermission();
+    fetchVapidKey();
   }, []);
+
+  const fetchVapidKey = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('get-vapid-key');
+      
+      if (error) {
+        console.error('Error fetching VAPID key:', error);
+        setVapidConfigured(false);
+        return;
+      }
+
+      if (data?.configured && data?.publicKey) {
+        setVapidPublicKey(data.publicKey);
+        setVapidConfigured(true);
+        checkNotificationPermission();
+      } else {
+        setVapidConfigured(false);
+      }
+    } catch (err) {
+      console.error('Error fetching VAPID key:', err);
+      setVapidConfigured(false);
+    }
+  };
 
   const checkNotificationPermission = async () => {
     if (!("Notification" in window) || !("serviceWorker" in navigator)) {
@@ -68,10 +93,7 @@ export const NotificationPrompt = () => {
       // Get service worker registration
       const registration = await navigator.serviceWorker.ready;
 
-      // VAPID public key - you'll need to generate this and add it as an environment variable
-      // For now, we'll use a placeholder and show instructions
-      const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
-      
+      // Check if VAPID key is available
       if (!vapidPublicKey) {
         toast({
           title: "Setup required",
