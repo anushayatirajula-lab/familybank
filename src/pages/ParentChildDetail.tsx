@@ -314,13 +314,13 @@ const ParentChildDetail = () => {
       <div className="container mx-auto px-4 py-8 space-y-6">
         {/* Wallet Overview */}
         <Card className="bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-950 dark:to-emerald-900 shadow-lg">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
-                  <DollarSign className="w-6 h-6 text-white" />
+          <CardHeader className="pb-3">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <CardTitle className="flex items-center gap-2 md:gap-3">
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                  <DollarSign className="w-5 h-5 md:w-6 md:h-6 text-white" />
                 </div>
-                Total Balance
+                <span className="text-lg md:text-2xl">Total Balance</span>
               </CardTitle>
               <div className="flex gap-2">
                 <JarPercentageEditor
