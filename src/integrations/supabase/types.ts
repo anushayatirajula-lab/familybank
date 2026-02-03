@@ -283,6 +283,7 @@ export type Database = {
           created_at: string | null
           current_period_end: string | null
           email: string
+          family_code: string | null
           full_name: string | null
           id: string
           stripe_customer_id: string | null
@@ -295,6 +296,7 @@ export type Database = {
           created_at?: string | null
           current_period_end?: string | null
           email: string
+          family_code?: string | null
           full_name?: string | null
           id: string
           stripe_customer_id?: string | null
@@ -307,6 +309,7 @@ export type Database = {
           created_at?: string | null
           current_period_end?: string | null
           email?: string
+          family_code?: string | null
           full_name?: string | null
           id?: string
           stripe_customer_id?: string | null
@@ -486,6 +489,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      generate_family_code: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["user_role"]
