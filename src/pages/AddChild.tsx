@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Loader2, Copy, Check } from "lucide-react";
+import { PasswordInput } from "@/components/ui/password-input";
+import { Progress } from "@/components/ui/progress";
 import {
   Dialog,
   DialogContent,
@@ -18,16 +20,33 @@ import {
 
 const JAR_TYPES = ["SAVINGS", "BOOKS", "SHOPPING", "CHARITY", "WISHLIST"];
 
+// Password strength calculation
+const getPasswordStrength = (password: string): { score: number; label: string; color: string } => {
+  let score = 0;
+  if (password.length >= 8) score += 25;
+  if (password.length >= 12) score += 15;
+  if (/[a-z]/.test(password)) score += 15;
+  if (/[A-Z]/.test(password)) score += 15;
+  if (/[0-9]/.test(password)) score += 15;
+  if (/[^a-zA-Z0-9]/.test(password)) score += 15;
+  
+  if (score < 40) return { score, label: "Weak", color: "bg-destructive" };
+  if (score < 70) return { score, label: "Fair", color: "bg-yellow-500" };
+  if (score < 90) return { score, label: "Good", color: "bg-blue-500" };
+  return { score, label: "Strong", color: "bg-green-500" };
+};
+
 const AddChild = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showCredentials, setShowCredentials] = useState(false);
-  const [credentials, setCredentials] = useState({ email: "", password: "", childName: "" });
+  const [credentials, setCredentials] = useState({ email: "", childName: "" });
   const [copiedEmail, setCopiedEmail] = useState(false);
-  const [copiedPassword, setCopiedPassword] = useState(false);
   const [jarPercentages, setJarPercentages] = useState({
     SAVINGS: 30,
     BOOKS: 20,
@@ -36,18 +55,17 @@ const AddChild = () => {
     WISHLIST: 20,
   });
 
-  const copyToClipboard = async (text: string, type: 'email' | 'password') => {
+  const passwordStrength = useMemo(() => getPasswordStrength(password), [password]);
+  const isPasswordValid = password.length >= 8 && passwordStrength.score >= 40;
+  const doPasswordsMatch = password === confirmPassword;
+
+  const copyToClipboard = async (text: string) => {
     await navigator.clipboard.writeText(text);
-    if (type === 'email') {
-      setCopiedEmail(true);
-      setTimeout(() => setCopiedEmail(false), 2000);
-    } else {
-      setCopiedPassword(true);
-      setTimeout(() => setCopiedPassword(false), 2000);
-    }
+    setCopiedEmail(true);
+    setTimeout(() => setCopiedEmail(false), 2000);
     toast({
       title: "Copied!",
-      description: `${type === 'email' ? 'Email' : 'Password'} copied to clipboard`,
+      description: "Email copied to clipboard",
     });
   };
 
@@ -72,6 +90,24 @@ const AddChild = () => {
       return;
     }
 
+    if (!isPasswordValid) {
+      toast({
+        variant: "destructive",
+        title: "Weak password",
+        description: "Password must be at least 8 characters with a mix of letters, numbers, or symbols.",
+      });
+      return;
+    }
+
+    if (!doPasswordsMatch) {
+      toast({
+        variant: "destructive",
+        title: "Passwords don't match",
+        description: "Please make sure both passwords are the same.",
+      });
+      return;
+    }
+
     if (getTotalPercentage() !== 100) {
       toast({
         variant: "destructive",
@@ -91,14 +127,13 @@ const AddChild = () => {
       const { data: { session: parentSession } } = await supabase.auth.getSession();
       if (!parentSession) throw new Error("No active session");
 
-      // Generate secure credentials for child with simple 4-digit code
+      // Generate email for child with simple 4-digit code (password is set by parent)
       const uniqueCode = Math.floor(1000 + Math.random() * 9000); // 4-digit code
       const childEmail = `${name.toLowerCase().replace(/\s+/g, '')}.${uniqueCode}@familybank.app`;
-      const tempPassword = `child${Date.now()}${Math.random().toString(36)}`; // Secure random password
       
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: childEmail,
-        password: tempPassword,
+        password: password, // Use parent-set password
         options: {
           data: {
             display_name: name,
@@ -156,17 +191,16 @@ const AddChild = () => {
 
       if (balancesError) throw balancesError;
 
-      // Show credentials dialog
+      // Show credentials dialog (only email - parent already knows the password)
       setCredentials({
         email: childEmail,
-        password: tempPassword,
         childName: name
       });
       setShowCredentials(true);
 
       toast({
         title: "Child added!",
-        description: `${name} has been added successfully. Please save the login credentials.`,
+        description: `${name} has been added successfully. Note the login email below.`,
       });
     } catch (error: any) {
       console.error("Error adding child:", error);
@@ -188,9 +222,9 @@ const AddChild = () => {
       }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Child Account Created!</DialogTitle>
+            <DialogTitle>🎉 Child Account Created!</DialogTitle>
             <DialogDescription>
-              Save these credentials to share with {credentials.childName}. They will need these to log in.
+              Share the login email with {credentials.childName}. They'll use the password you just set.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -206,36 +240,18 @@ const AddChild = () => {
                   type="button"
                   size="sm"
                   variant="outline"
-                  onClick={() => copyToClipboard(credentials.email, 'email')}
+                  onClick={() => copyToClipboard(credentials.email)}
                 >
                   {copiedEmail ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
             </div>
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Temporary Password</Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  value={credentials.password}
-                  readOnly
-                  className="flex-1 font-mono text-sm"
-                />
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => copyToClipboard(credentials.password, 'password')}
-                >
-                  {copiedPassword ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                </Button>
-              </div>
-            </div>
-            <div className="rounded-lg bg-destructive/10 p-4 border border-destructive/30">
-              <p className="text-sm text-destructive font-medium">
-                🔐 <strong>IMPORTANT - Save Now!</strong>
+            <div className="rounded-lg bg-primary/10 p-4 border border-primary/30">
+              <p className="text-sm font-medium">
+                ✅ <strong>Password Set</strong>
               </p>
-              <p className="text-sm text-destructive/90 mt-1">
-                This password will NOT be shown again and cannot be recovered. Copy it now and share it securely with {credentials.childName}. They must change it on first login.
+              <p className="text-sm text-muted-foreground mt-1">
+                You set the password during setup. Share it with {credentials.childName} so they can log in at the child login page.
               </p>
             </div>
             <Button onClick={() => {
@@ -292,9 +308,64 @@ const AddChild = () => {
                   required
                   className="text-base"
                 />
-                <p className="text-sm text-muted-foreground">
-                  A secure login will be automatically generated for your child
-                </p>
+              </div>
+
+              <div className="space-y-4 rounded-lg border p-4 bg-muted/30">
+                <div>
+                  <Label className="text-base">Set Child's Password *</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Create a password your child will use to log in. An email will be auto-generated.
+                  </p>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <PasswordInput
+                    id="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter a password for your child"
+                    required
+                  />
+                  {password && (
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between text-sm">
+                        <span>Strength:</span>
+                        <span className={`font-medium ${
+                          passwordStrength.label === 'Weak' ? 'text-destructive' :
+                          passwordStrength.label === 'Fair' ? 'text-yellow-600' :
+                          passwordStrength.label === 'Good' ? 'text-blue-600' : 'text-green-600'
+                        }`}>
+                          {passwordStrength.label}
+                        </span>
+                      </div>
+                      <Progress 
+                        value={passwordStrength.score} 
+                        className="h-2"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Use 8+ characters with uppercase, lowercase, numbers, and symbols
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirm Password</Label>
+                  <PasswordInput
+                    id="confirmPassword"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Confirm the password"
+                    required
+                  />
+                  {confirmPassword && !doPasswordsMatch && (
+                    <p className="text-sm text-destructive">Passwords don't match</p>
+                  )}
+                  {confirmPassword && doPasswordsMatch && (
+                    <p className="text-sm text-green-600">✓ Passwords match</p>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-4">
@@ -328,7 +399,11 @@ const AddChild = () => {
                 ))}
               </div>
 
-              <Button type="submit" className="w-full" disabled={loading || getTotalPercentage() !== 100}>
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={loading || getTotalPercentage() !== 100 || !isPasswordValid || !doPasswordsMatch}
+              >
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Add Child
               </Button>
