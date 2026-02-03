@@ -284,22 +284,22 @@ const ParentDashboard = () => {
         {subscription.isAccessAllowed() && (
           <>
             {/* Quick Actions */}
-            <div className="flex flex-wrap gap-4 mb-8">
-              <Button onClick={() => navigate("/parent/children/new")} size="lg">
-                <Plus className="mr-2 h-5 w-5" />
-                Add Child
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+              <Button onClick={() => navigate("/parent/children/new")} className="w-full h-auto py-3 flex flex-col items-center gap-1.5 sm:flex-row sm:gap-2">
+                <Plus className="h-5 w-5" />
+                <span className="text-sm">Add Child</span>
               </Button>
-              <Button onClick={() => navigate("/parent/chores/new")} variant="outline" size="lg">
-                <Plus className="mr-2 h-5 w-5" />
-                Create Chore
+              <Button onClick={() => navigate("/parent/chores/new")} variant="outline" className="w-full h-auto py-3 flex flex-col items-center gap-1.5 sm:flex-row sm:gap-2">
+                <Plus className="h-5 w-5" />
+                <span className="text-sm">Create Chore</span>
               </Button>
-              <Button onClick={handleGenerateRecurringChores} variant="outline" size="lg">
-                <RefreshCw className="mr-2 h-5 w-5" />
-                Generate Recurring Chores
+              <Button onClick={handleGenerateRecurringChores} variant="outline" className="w-full h-auto py-3 flex flex-col items-center gap-1.5 sm:flex-row sm:gap-2">
+                <RefreshCw className="h-5 w-5" />
+                <span className="text-sm text-center leading-tight">Generate Recurring</span>
               </Button>
-              <Button onClick={handleCleanupOldChores} variant="outline" size="lg">
-                <Trash2 className="mr-2 h-5 w-5" />
-                Cleanup Old Chores
+              <Button onClick={handleCleanupOldChores} variant="outline" className="w-full h-auto py-3 flex flex-col items-center gap-1.5 sm:flex-row sm:gap-2">
+                <Trash2 className="h-5 w-5" />
+                <span className="text-sm text-center leading-tight">Cleanup Old</span>
               </Button>
             </div>
 
