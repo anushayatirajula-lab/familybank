@@ -119,11 +119,11 @@ export const EditChildProfile = ({
     }
 
     const parsedAge = age ? parseInt(age, 10) : null;
-    if (age && (isNaN(parsedAge!) || parsedAge! < 1 || parsedAge! > 18)) {
+    if (age && (isNaN(parsedAge!) || parsedAge! < 6 || parsedAge! > 16)) {
       toast({
         variant: "destructive",
         title: "Invalid age",
-        description: "Please enter a valid age between 1 and 18.",
+        description: "Please enter an age between 6 and 16 years.",
       });
       return;
     }
@@ -219,15 +219,15 @@ export const EditChildProfile = ({
 
           {/* Age Field */}
           <div className="grid gap-2">
-            <Label htmlFor="age">Age</Label>
+            <Label htmlFor="age">Age (6-16 years)</Label>
             <Input
               id="age"
               type="number"
-              min="1"
-              max="18"
+              min="6"
+              max="16"
               value={age}
               onChange={(e) => setAge(e.target.value)}
-              placeholder="Child's age"
+              placeholder="Enter age (6-16)"
               className="text-base"
             />
           </div>
