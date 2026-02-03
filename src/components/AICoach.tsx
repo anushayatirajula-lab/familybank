@@ -97,20 +97,21 @@ const AICoach = ({ childAge, childId }: AICoachProps) => {
 
   return (
     <Card className="h-full flex flex-col overflow-hidden">
-      <CardHeader className="flex-shrink-0 pb-2 md:pb-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary animate-pulse" />
-            <CardTitle>FamilyBank Coach</CardTitle>
+      <CardHeader className="flex-shrink-0 pb-2 md:pb-4 px-3 md:px-6">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 md:gap-2 min-w-0">
+            <Sparkles className="h-4 w-4 md:h-5 md:w-5 text-primary animate-pulse flex-shrink-0" />
+            <CardTitle className="text-base md:text-xl truncate">FamilyBank Coach</CardTitle>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-1.5 md:gap-2 flex-shrink-0">
             <Button
               variant="outline"
               size="sm"
               onClick={startLesson}
               disabled={loading}
+              className="px-2 md:px-3 text-xs md:text-sm"
             >
-              <BookOpen className="h-4 w-4 mr-1" />
+              <BookOpen className="h-3.5 w-3.5 md:h-4 md:w-4 mr-0.5 md:mr-1" />
               Lesson
             </Button>
             <Button
@@ -118,8 +119,9 @@ const AICoach = ({ childAge, childId }: AICoachProps) => {
               size="sm"
               onClick={startQuiz}
               disabled={loading}
+              className="px-2 md:px-3 text-xs md:text-sm"
             >
-              <Trophy className="h-4 w-4 mr-1" />
+              <Trophy className="h-3.5 w-3.5 md:h-4 md:w-4 mr-0.5 md:mr-1" />
               Quiz
             </Button>
           </div>
