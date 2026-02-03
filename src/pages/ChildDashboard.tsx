@@ -230,10 +230,6 @@ const ChildDashboard = () => {
               <p className="text-muted-foreground">Let's check your progress today</p>
             </div>
             <div className="flex gap-2">
-              <Button variant="ghost" onClick={() => navigate("/")}>
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Home
-              </Button>
               <Button variant="outline" onClick={async () => {
                 await supabase.auth.signOut();
                 navigate("/child/login");
