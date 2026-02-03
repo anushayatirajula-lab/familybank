@@ -243,10 +243,6 @@ const ParentDashboard = () => {
                 Manage Subscription
               </Button>
             )}
-            <Button variant="ghost" onClick={() => navigate("/")}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Home
-            </Button>
             <Button variant="outline" onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />
               Logout
