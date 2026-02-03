@@ -196,8 +196,10 @@ export default function WishlistApprovalQueue({ childId }: WishlistApprovalQueue
           
           return (
             <div key={item.id} className="border rounded-lg p-4 bg-card shadow-sm">
+              {/* Desktop: Single row layout / Mobile: Stacked layout */}
+              
               {/* Header: Title + Status Badge */}
-              <div className="flex items-center justify-between gap-3 mb-3">
+              <div className="flex items-center justify-between gap-3 mb-2 md:mb-0 md:hidden">
                 <div className="flex items-center gap-2 min-w-0">
                   <h3 className="font-semibold text-base truncate">{item.title}</h3>
                   {!childId && (
@@ -210,11 +212,11 @@ export default function WishlistApprovalQueue({ childId }: WishlistApprovalQueue
               </div>
 
               {item.description && (
-                <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{item.description}</p>
+                <p className="text-sm text-muted-foreground mb-3 line-clamp-2 md:hidden">{item.description}</p>
               )}
 
-              {/* Price & Savings Info */}
-              <div className="flex items-center justify-between mb-3">
+              {/* Mobile: Price & Savings stacked */}
+              <div className="flex items-center justify-between mb-3 md:hidden">
                 <span className="text-2xl font-bold text-primary">
                   ${formatMoney(item.target_amount)}
                 </span>
@@ -232,8 +234,8 @@ export default function WishlistApprovalQueue({ childId }: WishlistApprovalQueue
                 </div>
               </div>
 
-              {/* Action Buttons - Full width on mobile */}
-              <div className="flex gap-2">
+              {/* Mobile: Action Buttons full width */}
+              <div className="flex gap-2 md:hidden">
                 <Button
                   variant="outline"
                   size="sm"
@@ -253,6 +255,56 @@ export default function WishlistApprovalQueue({ childId }: WishlistApprovalQueue
                   <Check className="w-4 h-4 mr-1.5" />
                   Approve
                 </Button>
+              </div>
+
+              {/* Desktop: Horizontal single-row layout */}
+              <div className="hidden md:flex md:items-center md:justify-between md:gap-4">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <h3 className="font-semibold text-base truncate">{item.title}</h3>
+                  {!childId && (
+                    <Badge variant="outline" className="text-xs shrink-0">
+                      {item.child_name}
+                    </Badge>
+                  )}
+                  <Badge variant="secondary" className="shrink-0 text-xs">Pending</Badge>
+                </div>
+                
+                <div className="flex items-center gap-6 shrink-0">
+                  <div className="text-right">
+                    <p className="text-xl font-bold text-primary">${formatMoney(item.target_amount)}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Saved: ${formatMoney(wishlistBalance)}
+                      {!hasEnoughBalance && (
+                        <span className="text-amber-600 ml-1">(−${formatMoney(item.target_amount - wishlistBalance)})</span>
+                      )}
+                      {hasEnoughBalance && (
+                        <span className="text-green-600 ml-1">✓ Ready</span>
+                      )}
+                    </p>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDeny(item)}
+                      disabled={processing}
+                      className="h-8 px-3"
+                    >
+                      <X className="w-3.5 h-3.5 mr-1" />
+                      Deny
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => handleApprove(item)}
+                      disabled={processing || !hasEnoughBalance}
+                      className="h-8 px-3"
+                    >
+                      <Check className="w-3.5 h-3.5 mr-1" />
+                      Approve
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
           );
