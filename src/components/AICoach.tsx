@@ -96,8 +96,8 @@ const AICoach = ({ childAge, childId }: AICoachProps) => {
   };
 
   return (
-    <Card className="h-full flex flex-col">
-      <CardHeader>
+    <Card className="h-full flex flex-col overflow-hidden">
+      <CardHeader className="flex-shrink-0 pb-2 md:pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary animate-pulse" />
@@ -125,7 +125,7 @@ const AICoach = ({ childAge, childId }: AICoachProps) => {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col gap-4 p-4">
+      <CardContent className="flex-1 flex flex-col gap-3 p-3 md:p-4 overflow-hidden min-h-0">
         <ScrollArea className="flex-1 pr-4" ref={scrollRef}>
           {messages.length === 0 ? (
             <div className="text-center text-muted-foreground py-8">
@@ -177,13 +177,14 @@ const AICoach = ({ childAge, childId }: AICoachProps) => {
           )}
         </ScrollArea>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-shrink-0">
           <Input
             placeholder="Ask me about money..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={(e) => e.key === "Enter" && sendMessage()}
             disabled={loading}
+            className="text-base"
           />
           <Button onClick={() => sendMessage()} disabled={loading || !input.trim()}>
             <Send className="h-4 w-4" />
@@ -191,7 +192,7 @@ const AICoach = ({ childAge, childId }: AICoachProps) => {
         </div>
 
         {messages.length > 0 && (
-          <Button variant="ghost" size="sm" onClick={resetChat}>
+          <Button variant="ghost" size="sm" onClick={resetChat} className="flex-shrink-0">
             Start Over
           </Button>
         )}
