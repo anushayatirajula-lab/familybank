@@ -84,7 +84,7 @@ const ChildAuth = () => {
       // Get child profile
       const { data: child, error: childError } = await supabase
         .from("children")
-        .select("id, name, first_login")
+        .select("id, name")
         .eq("user_id", authData.user.id)
         .single();
 
@@ -95,16 +95,6 @@ const ChildAuth = () => {
           description: "Could not find your profile. Please contact your parent.",
         });
         setLoading(false);
-        return;
-      }
-
-      // Check if this is first login - redirect to password update
-      if (child.first_login) {
-        toast({
-          title: "Welcome!",
-          description: `Hi ${child.name}! Please set your own password to continue.`,
-        });
-        navigate("/update-password?first_login=true");
         return;
       }
 
