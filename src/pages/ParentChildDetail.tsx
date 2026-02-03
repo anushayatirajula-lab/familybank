@@ -386,10 +386,11 @@ const ParentChildDetail = () => {
                 chores.map((chore) => (
                   <div
                     key={chore.id}
-                    className="flex items-center justify-between p-4 border rounded-lg"
+                    className="flex flex-col gap-3 p-3 md:p-4 border rounded-lg"
                   >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
+                    {/* Chore info */}
+                    <div className="flex items-start gap-2">
+                      <div className="flex-shrink-0 mt-0.5">
                         {chore.status === "APPROVED" && (
                           <CheckCircle className="w-5 h-5 text-green-600" />
                         )}
@@ -399,40 +400,46 @@ const ParentChildDetail = () => {
                         {chore.status === "PENDING" && (
                           <div className="w-5 h-5 rounded-full border-2 border-muted" />
                         )}
-                        <h3 className="font-semibold">{chore.title}</h3>
                       </div>
-                      {chore.description && (
-                        <p className="text-sm text-muted-foreground ml-8">{chore.description}</p>
-                      )}
-                      <div className="flex items-center gap-4 mt-2 ml-8 flex-wrap">
-                        <Badge className="bg-green-500 hover:bg-green-600">
-                          ${formatMoney(Number(chore.token_reward))}
-                        </Badge>
-                        <Badge variant="outline">{chore.status}</Badge>
-                        {chore.is_recurring && (
-                          <Badge variant="secondary" className="flex items-center gap-1">
-                            <RefreshCw className="h-3 w-3" />
-                            {chore.recurrence_type === "daily" ? "Daily" : `Weekly`}
-                          </Badge>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-sm md:text-base truncate">{chore.title}</h3>
+                        {chore.description && (
+                          <p className="text-xs md:text-sm text-muted-foreground truncate">{chore.description}</p>
                         )}
                       </div>
                     </div>
                     
-                    <div className="flex gap-2">
+                    {/* Badges */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge className="bg-green-500 hover:bg-green-600 text-xs">
+                        ${formatMoney(Number(chore.token_reward))}
+                      </Badge>
+                      <Badge variant="outline" className="text-xs">{chore.status}</Badge>
+                      {chore.is_recurring && (
+                        <Badge variant="secondary" className="flex items-center gap-1 text-xs">
+                          <RefreshCw className="h-3 w-3" />
+                          {chore.recurrence_type === "daily" ? "Daily" : `Weekly`}
+                        </Badge>
+                      )}
+                    </div>
+                    
+                    {/* Action buttons */}
+                    <div className="flex gap-2 flex-wrap">
                       {chore.status !== "APPROVED" && (
                         <>
                           <Button
                             size="sm"
                             variant="outline"
+                            className="text-xs h-8 px-2"
                             onClick={() => navigate(`/parent/chores/${chore.id}/edit`)}
                           >
-                            <Pencil className="mr-1 h-4 w-4" />
+                            <Pencil className="mr-1 h-3 w-3" />
                             Edit
                           </Button>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <Button size="sm" variant="destructive">
-                                <Trash2 className="mr-1 h-4 w-4" />
+                              <Button size="sm" variant="destructive" className="text-xs h-8 px-2">
+                                <Trash2 className="mr-1 h-3 w-3" />
                                 Delete
                               </Button>
                             </AlertDialogTrigger>
@@ -460,17 +467,19 @@ const ParentChildDetail = () => {
                         <>
                           <Button
                             size="sm"
+                            className="text-xs h-8 px-2"
                             onClick={() => handleApproveChore(chore.id, chore.token_reward)}
                           >
-                            <CheckCircle className="mr-1 h-4 w-4" />
+                            <CheckCircle className="mr-1 h-3 w-3" />
                             Approve
                           </Button>
                           <Button
                             size="sm"
                             variant="outline"
+                            className="text-xs h-8 px-2"
                             onClick={() => handleRejectChore(chore.id)}
                           >
-                            <XCircle className="mr-1 h-4 w-4" />
+                            <XCircle className="mr-1 h-3 w-3" />
                             Reject
                           </Button>
                         </>
