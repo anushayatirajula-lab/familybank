@@ -69,14 +69,21 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    // Get profile with trial info
+    // Get profile with trial info (only trial_ends_at is in profiles now)
     const { data: profile } = await supabaseClient
       .from('profiles')
-      .select('trial_ends_at, subscription_status, stripe_customer_id, subscription_id')
+      .select('trial_ends_at')
       .eq('id', userId)
       .single();
 
-    logStep("Profile retrieved", { profile });
+    // Get subscription data from protected table (only service role can access)
+    const { data: subscriptionData } = await supabaseClient
+      .from('subscription_data')
+      .select('stripe_customer_id, subscription_id, subscription_status, current_period_end')
+      .eq('user_id', userId)
+      .single();
+
+    logStep("Data retrieved", { profile, subscriptionData });
 
     // Check if this is the first login (trial_ends_at is null)
     // If so, start the trial now
@@ -92,11 +99,16 @@ serve(async (req) => {
       
       await supabaseClient
         .from('profiles')
-        .update({ 
-          trial_ends_at: trialEndsAt,
-          subscription_status: 'trialing'
-        })
+        .update({ trial_ends_at: trialEndsAt })
         .eq('id', userId);
+
+      // Create or update subscription_data entry
+      await supabaseClient
+        .from('subscription_data')
+        .upsert({ 
+          user_id: userId,
+          subscription_status: 'trialing'
+        }, { onConflict: 'user_id' });
     }
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", { 
@@ -128,12 +140,14 @@ serve(async (req) => {
     const customerId = customers.data[0].id;
     logStep("Found Stripe customer", { customerId });
 
-    // Update profile with Stripe customer ID if not set
-    if (!profile?.stripe_customer_id) {
+    // Update subscription_data with Stripe customer ID if not set
+    if (!subscriptionData?.stripe_customer_id) {
       await supabaseClient
-        .from('profiles')
-        .update({ stripe_customer_id: customerId })
-        .eq('id', userId);
+        .from('subscription_data')
+        .upsert({ 
+          user_id: userId,
+          stripe_customer_id: customerId 
+        }, { onConflict: 'user_id' });
     }
 
     const subscriptions = await stripe.subscriptions.list({
@@ -151,13 +165,13 @@ serve(async (req) => {
 
       logStep("No subscription found, checking trial", { isTrialActive });
 
-      // Update profile subscription status
+      // Update subscription_data status
       await supabaseClient
-        .from('profiles')
-        .update({ 
+        .from('subscription_data')
+        .upsert({ 
+          user_id: userId,
           subscription_status: isTrialActive ? 'trialing' : 'expired',
-        })
-        .eq('id', userId);
+        }, { onConflict: 'user_id' });
 
       return new Response(JSON.stringify({
         subscribed: false,
@@ -181,15 +195,15 @@ serve(async (req) => {
       isOnTrial
     });
 
-    // Update profile with subscription info
+    // Update subscription_data with subscription info
     await supabaseClient
-      .from('profiles')
-      .update({ 
+      .from('subscription_data')
+      .upsert({ 
+        user_id: userId,
         subscription_id: subscription.id,
         subscription_status: subscription.status,
         current_period_end: subscriptionEnd.toISOString(),
-      })
-      .eq('id', userId);
+      }, { onConflict: 'user_id' });
 
     return new Response(JSON.stringify({
       subscribed: isActive,
