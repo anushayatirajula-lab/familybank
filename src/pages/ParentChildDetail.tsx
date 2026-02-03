@@ -531,102 +531,109 @@ const ParentChildDetail = () => {
                   {chores.map((chore) => (
                     <div
                       key={chore.id}
-                      className="p-4 border rounded-lg space-y-3"
+                      className="p-3 border rounded-lg bg-card"
                     >
-                      {/* Header with status icon and title */}
-                      <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0 mt-0.5">
+                      {/* Header row: Status icon + Title + Reward */}
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="flex-shrink-0">
                           {chore.status === "APPROVED" && (
-                            <CheckCircle className="w-5 h-5 text-green-600" />
+                            <CheckCircle className="w-4 h-4 text-green-600" />
                           )}
                           {chore.status === "SUBMITTED" && (
-                            <Clock className="w-5 h-5 text-yellow-600" />
+                            <Clock className="w-4 h-4 text-yellow-600" />
                           )}
                           {chore.status === "PENDING" && (
-                            <div className="w-5 h-5 rounded-full border-2 border-muted" />
+                            <div className="w-4 h-4 rounded-full border-2 border-muted" />
                           )}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold truncate">{chore.title}</h3>
-                          {chore.description && (
-                            <p className="text-sm text-muted-foreground truncate">{chore.description}</p>
-                          )}
-                        </div>
-                      </div>
-                      
-                      {/* Badges row */}
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <Badge className="bg-green-500 hover:bg-green-600">
+                        <h3 className="flex-1 font-medium text-sm truncate">{chore.title}</h3>
+                        <Badge className="bg-green-500 hover:bg-green-600 text-xs flex-shrink-0">
                           ${formatMoney(Number(chore.token_reward))}
                         </Badge>
-                        <Badge variant="outline">{chore.status}</Badge>
-                        {chore.is_recurring && (
-                          <Badge variant="secondary" className="gap-1">
-                            <RefreshCw className="h-3 w-3" />
+                      </div>
+
+                      {/* Description if present */}
+                      {chore.description && (
+                        <p className="text-xs text-muted-foreground mb-2 pl-6 truncate">{chore.description}</p>
+                      )}
+                      
+                      {/* Status & Type row */}
+                      <div className="flex items-center gap-2 mb-3 pl-6">
+                        <Badge variant="outline" className="text-xs">{chore.status}</Badge>
+                        {chore.is_recurring ? (
+                          <Badge variant="secondary" className="text-xs gap-1">
+                            <RefreshCw className="h-2.5 w-2.5" />
                             {chore.recurrence_type === "daily" ? "Daily" : "Weekly"}
                           </Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">One-time</span>
                         )}
                       </div>
                       
-                      {/* Action buttons */}
-                      <div className="flex gap-2 flex-wrap pt-1">
-                        {chore.status !== "APPROVED" && (
-                          <>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => navigate(`/parent/chores/${chore.id}/edit`)}
-                            >
-                              <Pencil className="mr-1 h-3 w-3" />
-                              Edit
-                            </Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button size="sm" variant="destructive">
-                                  <Trash2 className="mr-1 h-3 w-3" />
-                                  Delete
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Delete Chore?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    This will permanently delete "{chore.title}". This action cannot be undone.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => handleDeleteChore(chore.id, chore.title)}
-                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                  >
+                      {/* Action buttons - full width grid */}
+                      {chore.status !== "APPROVED" && (
+                        <div className="grid grid-cols-2 gap-2">
+                          {chore.status !== "APPROVED" && (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="w-full h-8 text-xs"
+                                onClick={() => navigate(`/parent/chores/${chore.id}/edit`)}
+                              >
+                                <Pencil className="mr-1 h-3 w-3" />
+                                Edit
+                              </Button>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button size="sm" variant="destructive" className="w-full h-8 text-xs">
+                                    <Trash2 className="mr-1 h-3 w-3" />
                                     Delete
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </>
-                        )}
-                        {chore.status === "SUBMITTED" && (
-                          <>
-                            <Button
-                              size="sm"
-                              onClick={() => handleApproveChore(chore.id, chore.token_reward)}
-                            >
-                              <CheckCircle className="mr-1 h-3 w-3" />
-                              Approve
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleRejectChore(chore.id)}
-                            >
-                              <XCircle className="mr-1 h-3 w-3" />
-                              Reject
-                            </Button>
-                          </>
-                        )}
-                      </div>
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete Chore?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      This will permanently delete "{chore.title}". This action cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => handleDeleteChore(chore.id, chore.title)}
+                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    >
+                                      Delete
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </>
+                          )}
+                          {chore.status === "SUBMITTED" && (
+                            <>
+                              <Button
+                                size="sm"
+                                className="w-full h-8 text-xs"
+                                onClick={() => handleApproveChore(chore.id, chore.token_reward)}
+                              >
+                                <CheckCircle className="mr-1 h-3 w-3" />
+                                Approve
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="w-full h-8 text-xs"
+                                onClick={() => handleRejectChore(chore.id)}
+                              >
+                                <XCircle className="mr-1 h-3 w-3" />
+                                Reject
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
