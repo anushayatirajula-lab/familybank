@@ -191,67 +191,73 @@ export default function WishlistApprovalQueue({ childId }: WishlistApprovalQueue
 
   return (
     <>
-      <div className="space-y-4">
+      <div className="space-y-3">
         {items.map((item) => {
           const wishlistBalance = balances.get(item.child_id) || 0;
           const hasEnoughBalance = wishlistBalance >= item.target_amount;
           
           return (
-            <Card key={item.id}>
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <CardTitle className="text-lg">{item.title}</CardTitle>
-                    {!childId && (
-                      <Badge variant="outline" className="mt-2">
-                        {item.child_name}
-                      </Badge>
-                    )}
+            <Card key={item.id} className="overflow-hidden">
+              <div className="p-4">
+                {/* Header row: Title + Status */}
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-semibold text-base truncate">{item.title}</h3>
+                      {!childId && (
+                        <Badge variant="outline" className="text-xs shrink-0">
+                          {item.child_name}
+                        </Badge>
+                      )}
+                    </div>
                     {item.description && (
-                      <CardDescription className="mt-2">{item.description}</CardDescription>
+                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{item.description}</p>
                     )}
                   </div>
-                  <Badge variant="secondary">Pending</Badge>
+                  <Badge variant="secondary" className="shrink-0 text-xs">Pending</Badge>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-2xl font-bold text-primary">
-                        ${formatMoney(item.target_amount)}
-                      </p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        WISHLIST saved: ${formatMoney(wishlistBalance)}
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeny(item)}
-                        disabled={processing}
-                      >
-                        <X className="w-4 h-4 mr-1" />
-                        Deny
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={() => handleApprove(item)}
-                        disabled={processing || !hasEnoughBalance}
-                      >
-                        <Check className="w-4 h-4 mr-1" />
-                        Approve
-                      </Button>
+
+                {/* Content row: Price info + Actions */}
+                <div className="flex items-center justify-between gap-4 flex-wrap">
+                  <div className="flex items-baseline gap-3 flex-wrap">
+                    <span className="text-xl font-bold text-primary">
+                      ${formatMoney(item.target_amount)}
+                    </span>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span>Saved: ${formatMoney(wishlistBalance)}</span>
+                      {!hasEnoughBalance && (
+                        <span className="text-amber-600">
+                          (needs ${formatMoney(item.target_amount - wishlistBalance)} more)
+                        </span>
+                      )}
+                      {hasEnoughBalance && (
+                        <span className="text-green-600">✓ Ready</span>
+                      )}
                     </div>
                   </div>
-                  {!hasEnoughBalance && (
-                    <p className="text-sm text-amber-600 bg-amber-50 dark:bg-amber-950 p-2 rounded">
-                      ⚠️ Child needs ${formatMoney(item.target_amount - wishlistBalance)} more (${formatMoney(wishlistBalance)} saved / ${formatMoney(item.target_amount)} needed)
-                    </p>
-                  )}
+                  <div className="flex gap-2 shrink-0">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDeny(item)}
+                      disabled={processing}
+                      className="h-8 px-3"
+                    >
+                      <X className="w-3.5 h-3.5 mr-1" />
+                      Deny
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => handleApprove(item)}
+                      disabled={processing || !hasEnoughBalance}
+                      className="h-8 px-3"
+                    >
+                      <Check className="w-3.5 h-3.5 mr-1" />
+                      Approve
+                    </Button>
+                  </div>
                 </div>
-              </CardContent>
+              </div>
             </Card>
           );
         })}
