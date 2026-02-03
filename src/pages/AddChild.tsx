@@ -62,6 +62,16 @@ const AddChild = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const parsedAge = parseInt(age, 10);
+    if (isNaN(parsedAge) || parsedAge < 6 || parsedAge > 16) {
+      toast({
+        variant: "destructive",
+        title: "Invalid age",
+        description: "Please enter an age between 6 and 16 years.",
+      });
+      return;
+    }
+
     if (getTotalPercentage() !== 100) {
       toast({
         variant: "destructive",
@@ -270,16 +280,17 @@ const AddChild = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="age">Age *</Label>
+                <Label htmlFor="age">Age (6-16 years) *</Label>
                 <Input
                   id="age"
                   type="number"
-                  min="1"
-                  max="18"
+                  min="6"
+                  max="16"
                   value={age}
                   onChange={(e) => setAge(e.target.value)}
-                  placeholder="Enter age"
+                  placeholder="Enter age (6-16)"
                   required
+                  className="text-base"
                 />
                 <p className="text-sm text-muted-foreground">
                   A secure login will be automatically generated for your child
