@@ -8,8 +8,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Loader2, RefreshCw } from "lucide-react";
+
+const DAYS_OF_WEEK = [
+  { value: 0, label: "Sunday" },
+  { value: 1, label: "Monday" },
+  { value: 2, label: "Tuesday" },
+  { value: 3, label: "Wednesday" },
+  { value: 4, label: "Thursday" },
+  { value: 5, label: "Friday" },
+  { value: 6, label: "Saturday" },
+];
 
 const EditChore = () => {
   const navigate = useNavigate();
@@ -24,7 +35,7 @@ const EditChore = () => {
   const [rewardAmount, setRewardAmount] = useState("");
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurrenceType, setRecurrenceType] = useState<"daily" | "weekly">("weekly");
-  const [recurrenceDay, setRecurrenceDay] = useState<number>(1);
+  const [selectedDays, setSelectedDays] = useState<number[]>([1]);
 
   const formatStoredAmount = (stored: number) => {
     return stored / 10;
@@ -65,7 +76,15 @@ const EditChore = () => {
       setRewardAmount(formatStoredAmount(Number(chore.token_reward)).toString());
       setIsRecurring(chore.is_recurring || false);
       setRecurrenceType((chore.recurrence_type as "daily" | "weekly") || "weekly");
-      setRecurrenceDay(chore.recurrence_day ?? 1);
+      // Use recurrence_days if available, fall back to recurrence_day for backward compat
+      const days = (chore as any).recurrence_days;
+      if (days && Array.isArray(days) && days.length > 0) {
+        setSelectedDays(days);
+      } else if (chore.recurrence_day !== null) {
+        setSelectedDays([chore.recurrence_day]);
+      } else {
+        setSelectedDays([1]);
+      }
       setChildId(chore.child_id);
       setChildName((chore.children as any)?.name || "");
     } catch (error) {
@@ -94,7 +113,8 @@ const EditChore = () => {
         token_reward: storedAmount,
         is_recurring: isRecurring,
         recurrence_type: isRecurring ? recurrenceType : null,
-        recurrence_day: isRecurring && recurrenceType === "weekly" ? recurrenceDay : null,
+        recurrence_days: isRecurring && recurrenceType === "weekly" ? selectedDays : null,
+        recurrence_day: isRecurring && recurrenceType === "weekly" ? selectedDays[0] : null,
         updated_at: new Date().toISOString(),
       };
 
@@ -230,29 +250,36 @@ const EditChore = () => {
 
                     {recurrenceType === "weekly" && (
                       <div className="space-y-2">
-                        <Label>Day of Week</Label>
-                        <Select
-                          value={recurrenceDay.toString()}
-                          onValueChange={(value) => setRecurrenceDay(parseInt(value))}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="0">Sunday</SelectItem>
-                            <SelectItem value="1">Monday</SelectItem>
-                            <SelectItem value="2">Tuesday</SelectItem>
-                            <SelectItem value="3">Wednesday</SelectItem>
-                            <SelectItem value="4">Thursday</SelectItem>
-                            <SelectItem value="5">Friday</SelectItem>
-                            <SelectItem value="6">Saturday</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <Label>Days of Week</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {DAYS_OF_WEEK.map((day) => (
+                            <div key={day.value} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`edit-day-${day.value}`}
+                                checked={selectedDays.includes(day.value)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    setSelectedDays([...selectedDays, day.value].sort());
+                                  } else {
+                                    if (selectedDays.length > 1) {
+                                      setSelectedDays(selectedDays.filter(d => d !== day.value));
+                                    }
+                                  }
+                                }}
+                              />
+                              <Label htmlFor={`edit-day-${day.value}`} className="text-sm font-normal cursor-pointer">
+                                {day.label}
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
 
                     <p className="text-xs text-muted-foreground bg-amber-50 dark:bg-amber-950 p-2 rounded border border-amber-200 dark:border-amber-800">
-                      💡 This chore will be automatically created {recurrenceType === "daily" ? "every day" : `every ${["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][recurrenceDay]}`} after approval.
+                      💡 This chore will be automatically created {recurrenceType === "daily" 
+                        ? "every day" 
+                        : `on ${selectedDays.map(d => DAYS_OF_WEEK.find(day => day.value === d)?.label).join(", ")}`} after approval.
                     </p>
                   </div>
                 )}

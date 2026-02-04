@@ -172,6 +172,7 @@ export type Database = {
           is_recurring: boolean | null
           parent_chore_id: string | null
           recurrence_day: number | null
+          recurrence_days: number[] | null
           recurrence_type: string | null
           status: Database["public"]["Enums"]["chore_status"] | null
           submitted_at: string | null
@@ -189,6 +190,7 @@ export type Database = {
           is_recurring?: boolean | null
           parent_chore_id?: string | null
           recurrence_day?: number | null
+          recurrence_days?: number[] | null
           recurrence_type?: string | null
           status?: Database["public"]["Enums"]["chore_status"] | null
           submitted_at?: string | null
@@ -206,6 +208,7 @@ export type Database = {
           is_recurring?: boolean | null
           parent_chore_id?: string | null
           recurrence_day?: number | null
+          recurrence_days?: number[] | null
           recurrence_type?: string | null
           status?: Database["public"]["Enums"]["chore_status"] | null
           submitted_at?: string | null
