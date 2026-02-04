@@ -137,6 +137,9 @@ const ParentChildDetail = () => {
 
       if (approveError) throw approveError;
 
+      // Immediately refetch to update UI without waiting for realtime
+      await fetchChildData();
+
       // Send push notification to child
       if (child?.user_id) {
         try {
@@ -176,6 +179,9 @@ const ParentChildDetail = () => {
         .eq("id", choreId);
 
       if (error) throw error;
+
+      // Immediately refetch to update UI without waiting for realtime
+      await fetchChildData();
 
       toast({
         title: "Chore rejected",
