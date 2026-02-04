@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { RefreshCw } from "lucide-react";
@@ -6,6 +6,8 @@ import { RefreshCw } from "lucide-react";
 export const PWAUpdatePrompt = () => {
   const [showUpdatePrompt, setShowUpdatePrompt] = useState(false);
   const [waitingWorker, setWaitingWorker] = useState<ServiceWorker | null>(null);
+  // Track if user has explicitly triggered the update
+  const userInitiatedUpdateRef = useRef(false);
 
   const handleNewServiceWorker = useCallback((worker: ServiceWorker) => {
     setWaitingWorker(worker);
@@ -50,11 +52,11 @@ export const PWAUpdatePrompt = () => {
       });
     });
 
-    // Also handle controllerchange event for iOS
+    // Only handle controllerchange if user explicitly triggered the update
     const handleControllerChange = () => {
-      // Page will reload automatically after skipWaiting on most browsers
-      // but on iOS we might need to force it
-      window.location.reload();
+      if (userInitiatedUpdateRef.current) {
+        window.location.reload();
+      }
     };
     navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange);
 
@@ -87,6 +89,9 @@ export const PWAUpdatePrompt = () => {
   }, [handleNewServiceWorker]);
 
   const handleRefresh = () => {
+    // Mark that user initiated the update
+    userInitiatedUpdateRef.current = true;
+    
     if (waitingWorker) {
       // Tell the waiting service worker to skip waiting
       waitingWorker.postMessage({ type: 'SKIP_WAITING' });
