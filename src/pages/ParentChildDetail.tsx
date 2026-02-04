@@ -571,67 +571,97 @@ const ParentChildDetail = () => {
                       </div>
                       
                       {/* Action buttons - full width grid */}
-                      {chore.status !== "APPROVED" && (
+                      {chore.status === "PENDING" && (
                         <div className="grid grid-cols-2 gap-2">
-                          {chore.status !== "APPROVED" && (
-                            <>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="w-full h-8 text-xs"
-                                onClick={() => navigate(`/parent/chores/${chore.id}/edit`)}
-                              >
-                                <Pencil className="mr-1 h-3 w-3" />
-                                Edit
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="w-full h-8 text-xs"
+                            onClick={() => navigate(`/parent/chores/${chore.id}/edit`)}
+                          >
+                            <Pencil className="mr-1 h-3 w-3" />
+                            Edit
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button size="sm" variant="destructive" className="w-full h-8 text-xs">
+                                <Trash2 className="mr-1 h-3 w-3" />
+                                Delete
                               </Button>
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button size="sm" variant="destructive" className="w-full h-8 text-xs">
-                                    <Trash2 className="mr-1 h-3 w-3" />
-                                    Delete
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>Delete Chore?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      This will permanently delete "{chore.title}". This action cannot be undone.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={() => handleDeleteChore(chore.id, chore.title)}
-                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                    >
-                                      Delete
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            </>
-                          )}
-                          {chore.status === "SUBMITTED" && (
-                            <>
-                              <Button
-                                size="sm"
-                                className="w-full h-8 text-xs"
-                                onClick={() => handleApproveChore(chore.id, chore.token_reward)}
-                              >
-                                <CheckCircle className="mr-1 h-3 w-3" />
-                                Approve
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Chore?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This will permanently delete "{chore.title}". This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDeleteChore(chore.id, chore.title)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      )}
+                      {chore.status === "SUBMITTED" && (
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="w-full h-8 text-xs"
+                            onClick={() => navigate(`/parent/chores/${chore.id}/edit`)}
+                          >
+                            <Pencil className="mr-1 h-3 w-3" />
+                            Edit
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button size="sm" variant="destructive" className="w-full h-8 text-xs">
+                                <Trash2 className="mr-1 h-3 w-3" />
+                                Delete
                               </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="w-full h-8 text-xs"
-                                onClick={() => handleRejectChore(chore.id)}
-                              >
-                                <XCircle className="mr-1 h-3 w-3" />
-                                Reject
-                              </Button>
-                            </>
-                          )}
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Chore?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This will permanently delete "{chore.title}". This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDeleteChore(chore.id, chore.title)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                          <Button
+                            size="sm"
+                            className="w-full h-8 text-xs"
+                            onClick={() => handleApproveChore(chore.id, chore.token_reward)}
+                          >
+                            <CheckCircle className="mr-1 h-3 w-3" />
+                            Approve
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="w-full h-8 text-xs"
+                            onClick={() => handleRejectChore(chore.id)}
+                          >
+                            <XCircle className="mr-1 h-3 w-3" />
+                            Reject
+                          </Button>
                         </div>
                       )}
                     </div>
