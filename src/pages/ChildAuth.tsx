@@ -200,7 +200,7 @@ const ChildAuth = () => {
               </p>
             </div>
             
-            <Button type="submit" className="w-full" disabled={loading || !familyCode}>
+            <Button type="submit" className="w-full" disabled={loading || familyCode.length < 4 || !username || !password}>
               {loading ? "Logging in..." : "Login"}
             </Button>
             
