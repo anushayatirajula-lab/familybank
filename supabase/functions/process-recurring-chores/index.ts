@@ -15,6 +15,7 @@ interface RecurringChore {
   is_recurring: boolean;
   recurrence_type: string;
   recurrence_day: number | null;
+  recurrence_days: number[] | null;
   parent_chore_id: string | null;
 }
 
@@ -59,8 +60,13 @@ Deno.serve(async (req) => {
 
       if (chore.recurrence_type === "daily") {
         shouldCreate = true;
-      } else if (chore.recurrence_type === "weekly" && chore.recurrence_day === dayOfWeek) {
-        shouldCreate = true;
+      } else if (chore.recurrence_type === "weekly") {
+        // Check recurrence_days array first, fall back to recurrence_day for backward compat
+        if (chore.recurrence_days && Array.isArray(chore.recurrence_days)) {
+          shouldCreate = chore.recurrence_days.includes(dayOfWeek);
+        } else if (chore.recurrence_day === dayOfWeek) {
+          shouldCreate = true;
+        }
       }
 
       if (shouldCreate) {

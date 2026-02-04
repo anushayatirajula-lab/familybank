@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Loader2, RefreshCw } from "lucide-react";
 
@@ -15,6 +16,16 @@ interface Child {
   id: string;
   name: string;
 }
+
+const DAYS_OF_WEEK = [
+  { value: 0, label: "Sunday" },
+  { value: 1, label: "Monday" },
+  { value: 2, label: "Tuesday" },
+  { value: 3, label: "Wednesday" },
+  { value: 4, label: "Thursday" },
+  { value: 5, label: "Friday" },
+  { value: 6, label: "Saturday" },
+];
 
 const CreateChore = () => {
   const navigate = useNavigate();
@@ -27,7 +38,7 @@ const CreateChore = () => {
   const [rewardAmount, setRewardAmount] = useState("");
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurrenceType, setRecurrenceType] = useState<"daily" | "weekly">("weekly");
-  const [recurrenceDay, setRecurrenceDay] = useState<number>(1); // Monday
+  const [selectedDays, setSelectedDays] = useState<number[]>([1]); // Default to Monday
 
   const dollarsToCents = (dollars: number) => {
     return dollars * 10;
@@ -88,7 +99,8 @@ const CreateChore = () => {
       if (isRecurring) {
         choreData.recurrence_type = recurrenceType;
         if (recurrenceType === "weekly") {
-          choreData.recurrence_day = recurrenceDay;
+          choreData.recurrence_days = selectedDays;
+          choreData.recurrence_day = selectedDays[0]; // Keep backward compat
         }
       }
 
@@ -229,29 +241,37 @@ const CreateChore = () => {
 
                     {recurrenceType === "weekly" && (
                       <div className="space-y-2">
-                        <Label>Day of Week</Label>
-                        <Select
-                          value={recurrenceDay.toString()}
-                          onValueChange={(value) => setRecurrenceDay(parseInt(value))}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="0">Sunday</SelectItem>
-                            <SelectItem value="1">Monday</SelectItem>
-                            <SelectItem value="2">Tuesday</SelectItem>
-                            <SelectItem value="3">Wednesday</SelectItem>
-                            <SelectItem value="4">Thursday</SelectItem>
-                            <SelectItem value="5">Friday</SelectItem>
-                            <SelectItem value="6">Saturday</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <Label>Days of Week</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {DAYS_OF_WEEK.map((day) => (
+                            <div key={day.value} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`day-${day.value}`}
+                                checked={selectedDays.includes(day.value)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    setSelectedDays([...selectedDays, day.value].sort());
+                                  } else {
+                                    // Prevent unchecking if it's the last selected day
+                                    if (selectedDays.length > 1) {
+                                      setSelectedDays(selectedDays.filter(d => d !== day.value));
+                                    }
+                                  }
+                                }}
+                              />
+                              <Label htmlFor={`day-${day.value}`} className="text-sm font-normal cursor-pointer">
+                                {day.label}
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
 
                     <p className="text-xs text-muted-foreground bg-amber-50 dark:bg-amber-950 p-2 rounded border border-amber-200 dark:border-amber-800">
-                      💡 This chore will be automatically created {recurrenceType === "daily" ? "every day" : `every ${["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][recurrenceDay]}`} after the first one is approved.
+                      💡 This chore will be automatically created {recurrenceType === "daily" 
+                        ? "every day" 
+                        : `on ${selectedDays.map(d => DAYS_OF_WEEK.find(day => day.value === d)?.label).join(", ")}`} after the first one is approved.
                     </p>
                   </div>
                 )}
