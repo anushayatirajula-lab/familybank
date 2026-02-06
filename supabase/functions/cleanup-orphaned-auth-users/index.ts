@@ -30,12 +30,12 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Filter to only @familybank.internal users
-    const internalUsers = authUsers.users.filter(
-      (user) => user.email?.endsWith("@familybank.internal")
+    // Filter to child account emails (both legacy @familybank.app and current @familybank.internal)
+    const childAuthUsers = authUsers.users.filter(
+      (user) => user.email?.endsWith("@familybank.internal") || user.email?.endsWith("@familybank.app")
     );
 
-    console.log(`Found ${internalUsers.length} @familybank.internal auth users`);
+    console.log(`Found ${childAuthUsers.length} child auth users (@familybank.internal + legacy @familybank.app)`);
 
     // Get all child user_ids from the database
     const { data: children, error: childrenError } = await supabaseAdmin
@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
     console.log(`Found ${validUserIds.size} valid child user_ids in database`);
 
     // Find orphaned users (auth users without matching child records)
-    const orphanedUsers = internalUsers.filter(
+    const orphanedUsers = childAuthUsers.filter(
       (user) => !validUserIds.has(user.id)
     );
 
@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
     const result = {
       success: true,
       summary: {
-        totalInternalUsers: internalUsers.length,
+        totalChildAuthUsers: childAuthUsers.length,
         validChildUsers: validUserIds.size,
         orphanedFound: orphanedUsers.length,
         deleted: deleted.length,
