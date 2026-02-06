@@ -232,16 +232,17 @@ const ParentChildDetail = () => {
 
   const handleDeleteChild = async () => {
     try {
-      const { error } = await supabase
-        .from("children")
-        .delete()
-        .eq("id", childId);
+      // Call edge function to delete both auth user and database records
+      const { data, error } = await supabase.functions.invoke("delete-child-profile", {
+        body: { childId },
+      });
 
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
       toast({
         title: "Child deleted",
-        description: `${child.name}'s profile has been removed.`,
+        description: data?.message || `${child.name}'s profile has been removed.`,
       });
 
       navigate("/parent/dashboard");
@@ -250,7 +251,7 @@ const ParentChildDetail = () => {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to delete child profile.",
+        description: error instanceof Error ? error.message : "Failed to delete child profile.",
       });
     }
   };
