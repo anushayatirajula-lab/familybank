@@ -74,43 +74,73 @@ function escapeHtml(unsafe: string): string {
       });
     }
 
-    // Construct the internal email for the child
+    // Construct possible internal emails for the child (current + legacy pattern)
     const childInternalEmail = `${childUsername}_${familyCode.toLowerCase()}@familybank.internal`;
+    const childLegacyEmail = `${childUsername}_${familyCode.toLowerCase()}@familybank.app`;
 
-    // Find the child by internal email
-    const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.listUsers();
-    
-    if (authError) {
-      console.error('Error listing users:', authError);
+    // First, try to find the child in the children table via the parent
+    const { data: childRecords, error: childLookupError } = await supabaseAdmin
+      .from('children')
+      .select('id, name, user_id')
+      .eq('parent_id', parent.id)
+      .not('user_id', 'is', null)
+      .limit(100);
+
+    if (childLookupError) {
+      console.error('Error looking up children:', childLookupError);
       return new Response(JSON.stringify({ error: 'Internal error' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const childAuthUser = authUser.users.find(u => u.email === childInternalEmail);
-    
+    // Strategy 1: Match by auth email (username-based lookup)
+    let childAuthUser = null;
+    let matchedChild = null;
+
+    for (const child of childRecords || []) {
+      if (!child.user_id) continue;
+      const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(child.user_id);
+      if (userError || !userData?.user) continue;
+      
+      const userEmail = userData.user.email;
+      if (userEmail === childInternalEmail || userEmail === childLegacyEmail) {
+        childAuthUser = userData.user;
+        matchedChild = child;
+        break;
+      }
+    }
+
+    // Strategy 2: If no email match, try matching by child display name (case-insensitive)
     if (!childAuthUser) {
-      console.error('Child account not found');
-      return new Response(JSON.stringify({ error: 'Child account not found' }), {
+      const nameMatch = (childRecords || []).find(
+        c => c.name.toLowerCase() === childUsername.toLowerCase()
+      );
+      if (nameMatch && nameMatch.user_id) {
+        const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(nameMatch.user_id);
+        if (!userError && userData?.user) {
+          childAuthUser = userData.user;
+          matchedChild = nameMatch;
+          console.log('Matched child by display name instead of username');
+        }
+      }
+    }
+
+    if (!childAuthUser || !matchedChild) {
+      console.error('Child account not found for username:', childUsername, 'in family:', familyCode);
+      return new Response(JSON.stringify({ error: 'Child account not found. Please check your username and family code.' }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Get child's display name
-    const { data: child, error: childError } = await supabaseAdmin
-      .from('children')
-      .select('name')
-      .eq('user_id', childAuthUser.id)
-      .single();
+    const childDisplayName = matchedChild.name || childUsername;
 
-    const childDisplayName = child?.name || childUsername;
-
-    // Generate password reset link for the child
+    // Generate password reset link for the child (use actual auth email)
+    const actualEmail = childAuthUser.email!;
     const { data: resetData, error: resetError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'recovery',
-      email: childInternalEmail,
+      email: actualEmail,
       options: {
         redirectTo: `${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '.lovable.app') || 'https://familybank.lovable.app'}/update-password`,
       }
