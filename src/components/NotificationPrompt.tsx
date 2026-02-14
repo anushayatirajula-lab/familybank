@@ -107,7 +107,7 @@ export const NotificationPrompt = () => {
       const convertedVapidKey = urlBase64ToUint8Array(vapidPublicKey);
 
       // Subscribe to push notifications
-      const subscription = await registration.pushManager.subscribe({
+      const subscription = await (registration as any).pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: convertedVapidKey,
       });
