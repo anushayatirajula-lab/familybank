@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.cleanup-orphaned-auth-users]
 verify_jwt = false
+
+[functions.parent-reset-child-password]
+verify_jwt = false

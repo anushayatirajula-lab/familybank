@@ -16,7 +16,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, CheckCircle, XCircle, Clock, Trash2, RefreshCw, Pencil, DollarSign } from "lucide-react";
+import { ArrowLeft, CheckCircle, XCircle, Clock, Trash2, RefreshCw, Pencil, DollarSign, KeyRound } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { AllowanceManager } from "@/components/AllowanceManager";
 import WishlistApprovalQueue from "@/components/WishlistApprovalQueue";
 import { SpendingInsights } from "@/components/SpendingInsights";
@@ -51,6 +54,9 @@ const ParentChildDetail = () => {
   const [chores, setChores] = useState<Chore[]>([]);
   const [balances, setBalances] = useState<Balance[]>([]);
   const [loading, setLoading] = useState(true);
+  const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [resettingPassword, setResettingPassword] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -256,6 +262,39 @@ const ParentChildDetail = () => {
     }
   };
 
+  const handleResetChildPassword = async () => {
+    if (!newPassword || newPassword.length < 6) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Password must be at least 6 characters.",
+      });
+      return;
+    }
+    setResettingPassword(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("parent-reset-child-password", {
+        body: { childId, newPassword },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast({
+        title: "Password updated!",
+        description: `${child.name}'s password has been reset successfully.`,
+      });
+      setResetPasswordOpen(false);
+      setNewPassword("");
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to reset password.",
+      });
+    } finally {
+      setResettingPassword(false);
+    }
+  };
+
   const getJarColor = (jarType: string) => {
     const colors: Record<string, string> = {
       SAVINGS: "bg-jar-savings",
@@ -292,28 +331,63 @@ const ParentChildDetail = () => {
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Dashboard
             </Button>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm">
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete Child
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will permanently delete {child.name}'s profile, including all their chores, balances, and transaction history. This action cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDeleteChild} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                    Delete
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <div className="flex gap-2">
+              <Dialog open={resetPasswordOpen} onOpenChange={(open) => { setResetPasswordOpen(open); if (!open) setNewPassword(""); }}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <KeyRound className="mr-2 h-4 w-4" />
+                    Reset Password
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Reset {child.name}'s Password</DialogTitle>
+                    <DialogDescription>
+                      Enter a new password for {child.name}. Share it with them securely.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-2 py-4">
+                    <Label htmlFor="newPassword">New Password</Label>
+                    <Input
+                      id="newPassword"
+                      type="password"
+                      placeholder="Min 6 characters"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      minLength={6}
+                    />
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setResetPasswordOpen(false)}>Cancel</Button>
+                    <Button onClick={handleResetChildPassword} disabled={resettingPassword || newPassword.length < 6}>
+                      {resettingPassword ? "Resetting..." : "Reset Password"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm">
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete Child
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently delete {child.name}'s profile, including all their chores, balances, and transaction history. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteChild} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           </div>
           <div className="flex items-center gap-4">
             <Avatar className="h-14 w-14 md:h-16 md:w-16">
