@@ -1,6 +1,6 @@
 # FamilyBank 🏦
 
-A modern full-stack web application for teaching children financial literacy through gamified allowances, chores, and savings management.
+A modern full-stack SaaS platform for teaching children financial literacy through gamified allowances, chores, savings management, and AI-powered coaching.
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat&logo=typescript&logoColor=white)
 ![React](https://img.shields.io/badge/React-20232A?style=flat&logo=react&logoColor=61DAFB)
@@ -8,500 +8,262 @@ A modern full-stack web application for teaching children financial literacy thr
 ![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=flat&logo=supabase&logoColor=white)
 ![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat&logo=tailwind-css&logoColor=white)
 
-## 📋 Table of Contents
+**Live product:** https://familybank.lovable.app  
+**GitHub repo:** https://github.com/anushayatirajula-lab/familybank
 
-- [Overview](#overview)
-- [Features](#features)
-- [Architecture](#architecture)
-- [Tech Stack](#tech-stack)
-- [Getting Started](#getting-started)
-- [Project Structure](#project-structure)
-- [Database Schema](#database-schema)
-- [API Documentation](#api-documentation)
-- [Contributing](#contributing)
+---
 
-## 🎯 Overview
+## Why I Built This
 
-FamilyBank is an educational platform designed to help parents teach their children about money management in a fun, interactive way. Children earn tokens through completing chores, learn to allocate savings across different "jars" (savings goals), and receive AI-powered financial coaching.
+Traditional financial literacy tools for children lack structured workflows, feedback loops, and age-appropriate guidance. FamilyBank solves this by combining a full-stack SaaS architecture with LLM-powered coaching, real-time state-driven UX, and subscription infrastructure.
 
-### Key Highlights
+---
 
-- **Role-Based Access**: Separate dashboards for parents and children with appropriate permissions
-- **Gamification**: Token-based reward system that converts to real money equivalents
-- **AI Integration**: Personalized financial tips and coaching using Lovable AI
-- **Real-Time Updates**: Live balance and chore status updates using Supabase Realtime
-- **Subscription Model**: Stripe-powered premium features with trial period
-- **Progressive Web App**: Installable on mobile and desktop with offline support
-- **Push Notifications**: Real-time alerts for chore approvals, allowances, and wishlist updates
+## Core Technical Highlights
 
-## ✨ Features
+### Full-Stack Architecture
 
-### For Parents
-- ✅ Create and manage multiple child accounts
-- ✅ Assign chores with token rewards
-- ✅ Review and approve completed chores
-- ✅ Manage weekly allowances with automatic processing
-- ✅ Configure custom savings jar percentages
-- ✅ Approve wishlist item purchases
-- ✅ Track transaction history and analytics
-- ✅ Subscription management with Stripe
-- ✅ Push notifications for chore approvals and allowances
-- ✅ Offline support with automatic sync
+Built a complete production system spanning frontend, backend, database design, authentication, AI integration, and payment infrastructure.
 
-### For Children
-- ✅ View and complete assigned chores
-- ✅ Track token balance across multiple jars (Savings, Spending, Giving, Wishlist)
-- ✅ Create and manage wishlist items
-- ✅ Receive AI-powered financial coaching
-- ✅ Submit chores for parent approval
-- ✅ Real-time balance updates
-- ✅ Install as a mobile or desktop app (PWA)
-- ✅ Use app offline with automatic background sync
-
-## 🏗️ Architecture
+| Layer | Technology |
+|-------|-----------|
+| **Frontend** | React, TypeScript, TailwindCSS, Vite, shadcn/ui |
+| **Backend** | Supabase (PostgreSQL, Auth, Edge Functions, Realtime) |
+| **AI** | LLM API integration (Gemini) with age-adaptive prompt engineering |
+| **Payments** | Stripe (subscriptions, trials, checkout, customer portal) |
+| **Deployment** | PWA with offline support, push notifications, installable on mobile/desktop |
 
 ### System Architecture
 
-```mermaid
-graph TB
-    subgraph "Frontend - React + Vite"
-        UI[React Components]
-        RQ[React Query]
-        Auth[Auth Provider]
-    end
-    
-    subgraph "Backend - Lovable Cloud/Supabase"
-        API[Supabase Client]
-        DB[(PostgreSQL Database)]
-        AuthSys[Supabase Auth]
-        RT[Realtime Engine]
-        EF[Edge Functions]
-    end
-    
-    subgraph "External Services"
-        Stripe[Stripe API]
-        AI[Lovable AI]
-    end
-    
-    UI --> RQ
-    RQ --> API
-    Auth --> AuthSys
-    API --> DB
-    API --> RT
-    UI --> EF
-    EF --> DB
-    EF --> Stripe
-    EF --> AI
-    
-    RT -.->|Live Updates| UI
+```
+Client (React / TypeScript / PWA)
+        ↓
+Supabase Client SDK (Auth + Realtime + REST)
+        ↓
+PostgreSQL (RLS-protected tables)
+        ↓
+Edge Functions (Deno serverless)
+    ├── AI Coach (LLM prompt pipelines)
+    ├── Stripe billing (checkout, webhooks, portal)
+    ├── Allowance processing (scheduled cron)
+    └── Push notifications (Web Push API)
 ```
 
-### Data Flow - Chore Approval Process
+---
 
-```mermaid
-sequenceDiagram
-    participant Child
-    participant ChildUI
-    participant DB
-    participant ParentUI
-    participant Parent
-    participant EdgeFn
-    
-    Child->>ChildUI: Mark chore as "Done"
-    ChildUI->>DB: UPDATE chore status to SUBMITTED
-    DB-->>ParentUI: Realtime notification
-    ParentUI->>Parent: Show pending chore
-    Parent->>ParentUI: Approve chore
-    ParentUI->>EdgeFn: POST /approve-chore
-    EdgeFn->>DB: BEGIN Transaction
-    EdgeFn->>DB: UPDATE chore status to APPROVED
-    EdgeFn->>DB: INSERT into transactions
-    EdgeFn->>DB: UPDATE balances (distribute tokens)
-    EdgeFn->>DB: COMMIT Transaction
-    DB-->>ChildUI: Realtime balance update
-    ChildUI->>Child: Show updated balance
-```
+## Key Features
 
-### Database Entity Relationship
+### For Parents
+- Create and manage multiple child accounts with secure authentication
+- Assign chores with token rewards; review and approve submissions
+- Configure weekly allowances with automated processing
+- Customize savings jar percentages per child
+- Approve wishlist item purchases
+- Track transaction history and spending analytics
+- Reset child passwords directly from the dashboard
+- Subscription management via Stripe
+
+### For Children
+- View and complete assigned chores
+- Track token balances across multiple jars (Books, Shopping, Charity, Wishlist, Savings)
+- Create and manage wishlist items with savings goals
+- Receive age-appropriate AI-powered financial coaching
+- Real-time balance updates via Supabase Realtime
+
+---
+
+## AI Coaching System
+
+The platform includes an LLM-powered financial coaching feature for children, implemented as a Supabase Edge Function.
+
+**How it works:**
+
+1. Child or parent initiates a coaching session (lesson, quiz, or chat mode)
+2. The edge function verifies authentication and authorization (parent or child ownership)
+3. An age-adaptive system prompt is selected based on the child's age bracket (6–8, 9–11, 12+)
+4. The conversation history and system prompt are sent to the LLM (Google Gemini 2.5 Flash)
+5. The response is returned to the client in real-time
+
+**Design decisions:**
+- **Age-adaptive prompts:** Three distinct prompt templates tailored to developmental stages
+- **Mode-based behavior:** Lessons teach concepts, quizzes test understanding, chat answers questions
+- **Safety guardrails:** Prompts explicitly exclude complex financial topics (investing, debt, credit cards)
+- **Stateless execution:** Each request is self-contained; conversation history is managed client-side
+
+> **Note:** The current implementation uses prompt engineering with age and mode context. It does not yet perform dynamic retrieval of the child's financial data (balances, goals, transaction history) for context injection — this is a planned improvement.
+
+---
+
+## Backend Engineering
+
+### Database Schema
+
+Designed a relational schema with the following core tables:
+
+| Table | Purpose |
+|-------|---------|
+| `profiles` | Parent user accounts, linked to Supabase Auth |
+| `children` | Child profiles linked to parents, with auth credentials |
+| `chores` | Task assignments with status tracking (pending → submitted → approved) |
+| `balances` | Token balances per jar type per child |
+| `transactions` | Immutable audit trail of all token movements |
+| `wishlist_items` | Savings goals with progress tracking |
+| `allowances` | Automated weekly payment configuration |
+| `jars` | Customizable percentage allocation per child |
+| `subscription_data` | Stripe subscription state |
+| `push_subscriptions` | Web Push notification endpoints |
+| `notifications` | Notification history |
+
+### Entity Relationship Diagram
 
 ```mermaid
 erDiagram
     profiles ||--o{ children : "has many"
-    children ||--o{ chores : "has many"
-    children ||--o{ balances : "has many"
-    children ||--o{ transactions : "has many"
-    children ||--o{ wishlist_items : "has many"
-    children ||--o{ allowances : "has many"
-    children ||--o{ jars : "has many"
-    
-    profiles {
-        uuid id PK
-        text email
-        text full_name
-        text stripe_customer_id
-        text subscription_status
-        timestamp trial_ends_at
-    }
-    
-    children {
-        uuid id PK
-        uuid parent_id FK
-        uuid user_id FK
-        text name
-        integer age
-        boolean first_login
-    }
-    
-    chores {
-        uuid id PK
-        uuid child_id FK
-        text title
-        numeric token_reward
-        enum status
-    }
-    
-    balances {
-        uuid id PK
-        uuid child_id FK
-        enum jar_type
-        numeric amount
-    }
-    
-    transactions {
-        uuid id PK
-        uuid child_id FK
-        enum jar_type
-        numeric amount
-        enum transaction_type
-    }
+    children ||--o{ chores : "assigned"
+    children ||--o{ balances : "has"
+    children ||--o{ transactions : "has"
+    children ||--o{ wishlist_items : "has"
+    children ||--o{ allowances : "receives"
+    children ||--o{ jars : "configured"
 ```
-
-## 🛠️ Tech Stack
-
-### Frontend
-- **React 18** - UI library
-- **TypeScript** - Type safety
-- **Vite** - Build tool and dev server
-- **TailwindCSS** - Utility-first styling
-- **shadcn/ui** - Component library
-- **React Router DOM** - Client-side routing
-- **React Query** - Server state management
-- **React Hook Form** - Form handling with validation
-- **vite-plugin-pwa** - Progressive Web App support
-
-### Backend (Lovable Cloud/Supabase)
-- **PostgreSQL** - Primary database
-- **Supabase Auth** - Authentication system
-- **Row Level Security (RLS)** - Data access policies
-- **Realtime** - Live data subscriptions
-- **Edge Functions** - Serverless API endpoints (Deno runtime)
-- **Push Notifications** - Web Push API with VAPID
-
-### External Services
-- **Stripe** - Payment processing and subscriptions
-- **Lovable AI** - AI coaching features (GPT-4/Gemini)
-
-### DevOps
-- **GitHub** - Version control
-- **Lovable** - Deployment platform
-- **ESLint** - Code linting
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Node.js 18+ and npm
-- Git
-- A Lovable account (for deployment)
-- Stripe account (for payment features)
-- VAPID keys (optional, for push notifications)
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone <YOUR_GIT_URL>
-   cd familybank
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Environment Setup**
-   
-   The project uses Lovable Cloud, which automatically configures:
-   - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_PUBLISHABLE_KEY`
-   - `VITE_SUPABASE_PROJECT_ID`
-
-   For local development with Stripe, you'll need to add secrets via Lovable:
-   - `STRIPE_SECRET_KEY`
-   - `STRIPE_WEBHOOK_SECRET`
-
-4. **Start development server**
-   ```bash
-   npm run dev
-   ```
-
-5. **Access the application**
-   
-   Open [http://localhost:5173](http://localhost:5173) in your browser
-
-### Setting Up Push Notifications (Optional)
-
-Push notifications enable real-time alerts for chore approvals, allowances, and wishlist updates.
-
-1. **Generate VAPID Keys**
-   ```bash
-   npx web-push generate-vapid-keys
-   ```
-   Or use the online generator: https://vapidkeys.com/
-
-2. **Add Secrets via Lovable**
-   - `VAPID_PUBLIC_KEY` - Your public key
-   - `VAPID_PRIVATE_KEY` - Your private key
-   - `VITE_VAPID_PUBLIC_KEY` - Your public key (frontend)
-
-3. **Test Notifications**
-   - Log in as a parent
-   - Click "Enable Notifications" when prompted
-   - Approve a chore to receive a test notification
-
-For detailed setup instructions, see [VAPID_SETUP.md](VAPID_SETUP.md)
-
-### Progressive Web App Features
-
-FamilyBank is installable as a Progressive Web App (PWA):
-
-- **Installation**: Click the install button in your browser or visit `/install`
-- **Offline Support**: The app works offline with automatic background sync
-- **App-Like Experience**: Launch from home screen like a native app
-- **Push Notifications**: Receive notifications even when the app is closed
-
-**Supported Platforms**:
-- ✅ Desktop (Chrome, Edge, Firefox)
-- ✅ Android (Chrome, Samsung Internet)
-- ✅ iOS (Safari - limited features)
-- ✅ Windows, macOS, Linux
-
-### Database Setup
-
-The database schema is managed through Supabase migrations in `supabase/migrations/`. When you connect the project to Lovable Cloud, migrations are automatically applied.
-
-Key tables:
-- `profiles` - User account information
-- `children` - Child profiles linked to parents
-- `chores` - Task assignments
-- `balances` - Token balances per jar type
-- `transactions` - Financial transaction history
-- `wishlist_items` - Child savings goals
-- `allowances` - Automated weekly payments
-- `push_subscriptions` - Web push notification subscriptions
-- `notifications` - Notification history and delivery logs
-
-## 📁 Project Structure
-
-```
-familybank/
-├── src/
-│   ├── components/          # Reusable React components
-│   │   ├── ui/             # shadcn/ui components
-│   │   ├── AICoach.tsx     # AI coaching interface
-│   │   ├── NotificationPrompt.tsx  # Push notification opt-in
-│   │   ├── OfflineIndicator.tsx    # Network status indicator
-│   │   ├── InstallPWA.tsx  # PWA installation banner
-│   │   └── ...
-│   ├── pages/              # Route components
-│   │   ├── Auth.tsx        # Parent authentication
-│   │   ├── ChildAuth.tsx   # Child login
-│   │   ├── ParentDashboard.tsx
-│   │   ├── ChildDashboard.tsx
-│   │   ├── Install.tsx     # PWA installation guide
-│   │   └── ...
-│   ├── hooks/              # Custom React hooks
-│   │   ├── use-offline.ts  # Network status detection
-│   │   └── ...
-│   ├── lib/                # Utility functions
-│   ├── integrations/       # External service integrations
-│   │   └── supabase/       # Supabase client & types
-│   ├── App.tsx             # Main app component & routing
-│   └── main.tsx            # Application entry point
-├── supabase/
-│   ├── functions/          # Edge Functions
-│   │   ├── ai-coach/       # AI coaching endpoint
-│   │   ├── create-checkout/# Stripe checkout
-│   │   ├── process-allowances/
-│   │   ├── send-push-notification/  # Push notification sender
-│   │   └── ...
-│   └── migrations/         # Database migrations
-├── public/                 # Static assets
-│   ├── pwa-192x192.png    # PWA icon (192x192)
-│   ├── pwa-512x512.png    # PWA icon (512x512)
-│   ├── apple-touch-icon.png  # iOS icon
-│   └── robots.txt
-├── VAPID_SETUP.md         # Push notification setup guide
-└── [config files]          # Vite, TypeScript, Tailwind configs
-```
-
-## 🗄️ Database Schema
-
-### Core Tables
-
-#### `profiles`
-Stores parent user information and subscription details.
-- Links to Supabase Auth users
-- Manages Stripe customer relationships
-- Tracks subscription and trial status
-
-#### `children`
-Child accounts created by parents.
-- Each child has a unique `user_id` for authentication
-- Links to parent via `parent_id`
-- Stores age, settings, and initial credentials
-
-#### `balances`
-Current token balances for each jar type.
-- Four jar types: `SAVINGS`, `SPENDING`, `GIVING`, `WISHLIST`
-- Real-time updates via Supabase Realtime
-- Enforces non-negative balances
-
-#### `transactions`
-Complete audit trail of all token movements.
-- Types: `CHORE`, `ALLOWANCE`, `WITHDRAWAL`, `WISHLIST_PURCHASE`
-- Immutable records for accountability
-- Links to reference entities (chores, wishlist items)
 
 ### Security
 
-All tables are protected by Row Level Security (RLS) policies:
-- Parents can only access their own children's data
-- Children can only view/modify their own records
-- Sensitive operations require authentication
-- Database triggers prevent unauthorized modifications
+- **Row Level Security (RLS):** All tables are protected; parents can only access their own children's data, children can only access their own records
+- **Authentication isolation:** Separate auth flows for parents (email/password) and children (name/PIN)
+- **Server-side validation:** Edge functions verify JWT tokens and ownership before any mutation
+- **Role-based access:** `user_roles` table with PARENT/CHILD enum enforces access control
 
-## 📡 API Documentation
+### API Design (Edge Functions)
 
-### Edge Functions
-
-#### `POST /ai-coach`
-Get personalized financial advice for a child.
-```typescript
-// Request
-{
-  childId: string,
-  question: string
-}
-
-// Response
-{
-  response: string,
-  suggestions?: string[]
-}
-```
-
-#### `POST /create-checkout`
-Create a Stripe checkout session.
-```typescript
-// Request
-{
-  priceId: string,
-  successUrl: string,
-  cancelUrl: string
-}
-
-// Response
-{
-  sessionUrl: string
-}
-```
-
-#### `POST /process-allowances`
-Automated function to process weekly allowances (scheduled via cron).
-
-#### `POST /approve-wishlist-item`
-Approve a child's wishlist purchase.
-```typescript
-// Request
-{
-  itemId: string
-}
-
-// Response
-{
-  success: boolean,
-  newBalance: number
-}
-```
-
-## 🧪 Testing
-
-```bash
-# Run linter
-npm run lint
-
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
-```
-
-## 🚢 Deployment
-
-### Via Lovable (Recommended)
-
-1. Visit [Lovable Project](https://lovable.dev/projects/a7016775-175a-4f9b-bd1f-fa45802da9d5)
-2. Click **Publish** button (top right)
-3. Click **Update** to deploy frontend changes
-
-Note: Backend changes (Edge Functions, migrations) deploy automatically.
-
-### Via GitHub & Self-Hosting
-
-The project can be deployed to any static hosting service:
-- Vercel
-- Netlify
-- Cloudflare Pages
-- AWS Amplify
-
-See [Self-Hosting Guide](https://docs.lovable.dev/tips-tricks/self-hosting) for details.
-
-## 🔐 Environment Variables
-
-Required secrets (configured via Lovable Secrets Manager):
-- `STRIPE_SECRET_KEY` - Stripe API secret key
-- `STRIPE_WEBHOOK_SECRET` - Stripe webhook signing secret
-
-Auto-configured by Lovable Cloud:
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_PUBLISHABLE_KEY`
-- `VITE_SUPABASE_PROJECT_ID`
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is built with [Lovable](https://lovable.dev) and follows standard web application licensing.
-
-## 🙏 Acknowledgments
-
-- [shadcn/ui](https://ui.shadcn.com/) for the beautiful component library
-- [Supabase](https://supabase.com/) for the backend infrastructure
-- [Lovable](https://lovable.dev/) for the development platform
-- [Stripe](https://stripe.com/) for payment processing
-
-## 📞 Contact
-
-For questions or feedback, please open an issue on GitHub.
+| Endpoint | Purpose |
+|----------|---------|
+| `POST /ai-coach` | Age-adaptive financial coaching via LLM |
+| `POST /create-checkout` | Stripe checkout session creation |
+| `POST /customer-portal` | Stripe customer portal redirect |
+| `POST /check-subscription` | Subscription status verification |
+| `POST /process-allowances` | Automated weekly allowance distribution (cron) |
+| `POST /process-recurring-chores` | Recurring chore generation (cron) |
+| `POST /approve-wishlist-item` | Wishlist purchase approval with balance deduction |
+| `POST /send-push-notification` | Web Push notification delivery |
+| `POST /parent-reset-child-password` | Parent-initiated child password reset |
+| `POST /send-child-credentials` | Email child login credentials to parent |
+| `POST /delete-child-profile` | Cascade delete child profile and auth user |
+| `POST /cleanup-old-chores` | Maintenance: remove stale chore records |
+| `POST /cleanup-orphaned-auth-users` | Maintenance: remove orphaned auth entries |
 
 ---
 
-Built with ❤️ using [Lovable](https://lovable.dev)
+## Payment & Subscription Infrastructure
+
+Integrated Stripe for production billing:
+
+- Subscription lifecycle management (create, update, cancel)
+- Free trial periods (configurable duration)
+- Stripe Checkout for secure payment collection
+- Customer portal for self-service subscription management
+- Subscription status synced to database via `subscription_data` table
+- Gated features based on subscription status
+
+---
+
+## Progressive Web App (PWA)
+
+- Installable on mobile and desktop (Chrome, Edge, Safari, Firefox)
+- Offline support with service worker caching
+- Push notifications for chore approvals, allowances, and wishlist updates
+- App-like experience when launched from home screen
+- Dedicated `/install` page with platform-specific instructions
+
+---
+
+## Data Flow Example: Chore Approval
+
+```mermaid
+sequenceDiagram
+    participant Child
+    participant Frontend
+    participant Database
+    participant Parent
+    participant EdgeFn
+
+    Child->>Frontend: Marks chore as "Done"
+    Frontend->>Database: UPDATE status → SUBMITTED
+    Database-->>Parent: Realtime notification
+    Parent->>Frontend: Approves chore
+    Frontend->>EdgeFn: POST /approve-chore
+    EdgeFn->>Database: Transaction: approve + distribute tokens to jars
+    Database-->>Child: Realtime balance update
+```
+
+---
+
+## Engineering Challenges Solved
+
+- **Multi-role authentication:** Separate auth flows for parents (email/password) and children (name/PIN) within a single Supabase Auth instance
+- **Automated financial workflows:** Cron-triggered edge functions for allowance processing and recurring chore generation
+- **Real-time UX:** Supabase Realtime subscriptions for live balance and chore status updates
+- **Secure multi-tenant isolation:** RLS policies ensuring strict data isolation between families
+- **Offline-first PWA:** Service worker caching with background sync for offline usage
+
+---
+
+## Project Structure
+
+```
+src/
+├── components/          # Reusable React components
+│   ├── ui/              # shadcn/ui base components
+│   ├── AICoach.tsx       # AI coaching chat interface
+│   ├── AllowanceManager.tsx
+│   ├── CashOutDialog.tsx
+│   ├── SpendingInsights.tsx
+│   └── ...
+├── pages/               # Route-level page components
+│   ├── Auth.tsx          # Parent login/signup
+│   ├── ChildAuth.tsx     # Child login (name + PIN)
+│   ├── ParentDashboard.tsx
+│   ├── ChildDashboard.tsx
+│   ├── Install.tsx       # PWA installation guide
+│   └── ...
+├── hooks/               # Custom React hooks
+├── integrations/        # Supabase client & generated types
+└── lib/                 # Utility functions
+
+supabase/
+├── functions/           # Edge Functions (Deno runtime)
+│   ├── ai-coach/
+│   ├── create-checkout/
+│   ├── process-allowances/
+│   ├── send-push-notification/
+│   └── ...
+└── migrations/          # Database migration files
+```
+
+---
+
+## Key Skills Demonstrated
+
+- Full-stack TypeScript engineering (React + Supabase + Deno)
+- Relational database design with PostgreSQL
+- Row Level Security (RLS) policy design
+- RESTful API design with serverless edge functions
+- LLM integration with age-adaptive prompt engineering
+- Stripe payment/subscription integration
+- PWA development with offline support and push notifications
+- Real-time data synchronization
+- Production SaaS deployment
+
+---
+
+## Future Improvements
+
+- **Context-aware AI coaching:** Inject child's actual balances, goals, and transaction history into LLM prompts for personalized advice
+- **Spending analytics dashboards:** Visual charts showing spending patterns and savings progress over time
+- **Multi-language support:** Internationalization for broader accessibility
+- **Advanced notification preferences:** Granular control over notification types and frequency
+- **Performance optimization:** Query caching and pagination for large transaction histories
+
+---
+
+Built with [Lovable](https://lovable.dev)
