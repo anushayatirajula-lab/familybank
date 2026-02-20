@@ -534,15 +534,6 @@ export type Database = {
       }
     }
     Functions: {
-      authenticate_child: {
-        Args: { p_name: string; p_pin: string }
-        Returns: {
-          child_id: string
-          child_name: string
-          message: string
-          success: boolean
-        }[]
-      }
       fb_approve_chore: { Args: { p_chore: string }; Returns: boolean }
       fb_split_into_jars: {
         Args: {
