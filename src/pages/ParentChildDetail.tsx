@@ -27,6 +27,7 @@ import { CashOutDialog } from "@/components/CashOutDialog";
 import { JarPercentageEditor } from "@/components/JarPercentageEditor";
 import { EditChildProfile } from "@/components/EditChildProfile";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useSignedAvatar } from "@/hooks/use-signed-avatar";
 
 interface Chore {
   id: string;
@@ -57,6 +58,7 @@ const ParentChildDetail = () => {
   const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [resettingPassword, setResettingPassword] = useState(false);
+  const childAvatarUrl = useSignedAvatar(child?.avatar_url);
 
   useEffect(() => {
     checkAuth();
@@ -391,7 +393,7 @@ const ParentChildDetail = () => {
           </div>
           <div className="flex items-center gap-4">
             <Avatar className="h-14 w-14 md:h-16 md:w-16">
-              <AvatarImage src={child.avatar_url || undefined} alt={child.name} />
+              <AvatarImage src={childAvatarUrl || undefined} alt={child.name} />
               <AvatarFallback className="text-xl md:text-2xl bg-primary/10">
                 {child.name.charAt(0).toUpperCase()}
               </AvatarFallback>

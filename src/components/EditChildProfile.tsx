@@ -13,8 +13,10 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Pencil, Upload, User } from "lucide-react";
+import { Pencil, Upload } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useSignedAvatar } from "@/hooks/use-signed-avatar";
+
 
 interface EditChildProfileProps {
   childId: string;
@@ -37,7 +39,10 @@ export const EditChildProfile = ({
   const [age, setAge] = useState(childAge?.toString() || "");
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(avatarUrl);
+  // storagePath stores the raw path; signedUrl resolves it for display
+  const [storagePath, setStoragePath] = useState<string | null>(avatarUrl);
+  const resolvedPreview = useSignedAvatar(storagePath);
+
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -75,18 +80,20 @@ export const EditChildProfile = ({
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
-      const { data: urlData } = supabase.storage
+      // Get a signed URL (1 hour expiry) for preview
+      const { data: signedData, error: signedError } = await supabase.storage
         .from("child-avatars")
-        .getPublicUrl(fileName);
+        .createSignedUrl(fileName, 3600);
 
-      const newUrl = `${urlData.publicUrl}?t=${Date.now()}`;
-      setPreviewUrl(newUrl);
+      if (signedError) throw signedError;
 
-      // Update child record
+      setStoragePath(fileName);
+
+      // Store the storage path (not the signed URL) so we can re-sign later
+      const storagePath = fileName;
       const { error: updateError } = await supabase
         .from("children")
-        .update({ avatar_url: newUrl })
+        .update({ avatar_url: storagePath })
         .eq("id", childId);
 
       if (updateError) throw updateError;
@@ -164,7 +171,7 @@ export const EditChildProfile = ({
       if (isOpen) {
         setName(childName);
         setAge(childAge?.toString() || "");
-        setPreviewUrl(avatarUrl);
+        setStoragePath(avatarUrl);
       }
     }}>
       <DialogTrigger asChild>
@@ -185,7 +192,7 @@ export const EditChildProfile = ({
           {/* Avatar Upload */}
           <div className="flex flex-col items-center gap-3">
             <Avatar className="h-24 w-24">
-              <AvatarImage src={previewUrl || undefined} alt={name} />
+              <AvatarImage src={resolvedPreview || undefined} alt={name} />
               <AvatarFallback className="text-2xl bg-primary/10">
                 {name.charAt(0).toUpperCase()}
               </AvatarFallback>
