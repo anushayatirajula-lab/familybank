@@ -31,27 +31,27 @@ serve(async (req) => {
       );
     }
 
-    // 2. Create authenticated client for JWT validation
+    // 2. Create authenticated client and validate token using getUser
     const supabaseAuth = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      { global: { headers: { Authorization: authHeader } } }
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
     );
 
-    // 3. Validate JWT using getClaims
+    // 3. Validate JWT using getUser (more reliable than getClaims)
     const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
+    const { data: userData, error: userError } = await supabaseAuth.auth.getUser(token);
     
-    if (claimsError || !claimsData?.claims?.sub) {
-      logStep("Authentication failed", { error: claimsError?.message });
+    if (userError || !userData?.user) {
+      logStep("Authentication failed", { error: userError?.message });
       return new Response(
         JSON.stringify({ error: "Invalid or expired token" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const userId = claimsData.claims.sub;
-    const userEmail = claimsData.claims.email as string;
+    const userId = userData.user.id;
+    const userEmail = userData.user.email;
     
     if (!userEmail) {
       return new Response(
@@ -62,12 +62,9 @@ serve(async (req) => {
     
     logStep("User authenticated", { userId, email: userEmail });
 
-    // 4. Create service role client for database operations
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      { auth: { persistSession: false } }
-    );
+    // 4. Use the same service role client for database operations
+    const supabaseClient = supabaseAuth;
+
 
     // Get profile with trial info (only trial_ends_at is in profiles now)
     const { data: profile } = await supabaseClient
