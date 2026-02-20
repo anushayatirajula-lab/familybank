@@ -46,7 +46,6 @@ interface Child {
 
 interface Parent {
   id: string;
-  email: string;
   full_name: string | null;
 }
 
@@ -152,16 +151,12 @@ serve(async (req) => {
           continue;
         }
 
-        // Get parent email for notification
-        const { data: parent, error: parentError } = await supabase
-          .from("profiles")
-          .select("id, email, full_name")
-          .eq("id", child.parent_id)
-          .single();
+        // Get parent email from auth system (more secure than reading from profiles table)
+        const { data: parentAuthUser, error: parentError } = await supabase.auth.admin.getUserById(child.parent_id);
 
-        if (!parentError && parent) {
+        if (!parentError && parentAuthUser?.user?.email) {
           notifications.push({
-            parentEmail: parent.email,
+            parentEmail: parentAuthUser.user.email,
             childName: child.name,
             amount: allowance.weekly_amount,
           });
