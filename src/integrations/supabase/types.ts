@@ -355,6 +355,24 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limits: {
+        Row: {
+          attempted_at: string
+          id: string
+          key: string
+        }
+        Insert: {
+          attempted_at?: string
+          id?: string
+          key: string
+        }
+        Update: {
+          attempted_at?: string
+          id?: string
+          key?: string
+        }
+        Relationships: []
+      }
       subscription_data: {
         Row: {
           created_at: string | null

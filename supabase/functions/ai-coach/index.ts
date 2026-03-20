@@ -240,7 +240,7 @@ RULES:
   } catch (error: any) {
     console.error("Error in ai-coach function:", error);
     return new Response(
-      JSON.stringify({ error: error.message || "An error occurred" }),
+      JSON.stringify({ error: "An unexpected error occurred. Please try again." }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
