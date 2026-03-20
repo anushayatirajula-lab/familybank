@@ -85,9 +85,7 @@ const UpdatePassword = () => {
       // If this is a child's first login, update the first_login flag
       if (isFirstLogin && isChild && childId) {
         const { error: updateError } = await supabase
-          .from("children")
-          .update({ first_login: false })
-          .eq("id", childId);
+          .rpc("child_set_first_login_done", { p_child_id: childId });
 
         if (updateError) {
           console.error("Error updating first_login flag:", updateError);
