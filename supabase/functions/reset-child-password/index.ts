@@ -128,8 +128,8 @@ function escapeHtml(unsafe: string): string {
 
     if (!childAuthUser || !matchedChild) {
       console.error('Child account not found for username:', childUsername, 'in family:', familyCode);
-      return new Response(JSON.stringify({ error: 'Child account not found. Please check your username and family code.' }), {
-        status: 404,
+      return new Response(JSON.stringify({ success: true, message: 'If an account was found, a reset email has been sent to the parent.' }), {
+        status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
