@@ -164,9 +164,7 @@ const ChildDashboard = () => {
   const handleSubmitChore = async (choreId: string) => {
     try {
       const { error } = await supabase
-        .from("chores")
-        .update({ status: "SUBMITTED", submitted_at: new Date().toISOString() })
-        .eq("id", choreId);
+        .rpc("fb_submit_chore", { p_chore_id: choreId });
 
       if (error) throw error;
 
