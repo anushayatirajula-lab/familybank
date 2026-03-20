@@ -68,8 +68,8 @@ function escapeHtml(unsafe: string): string {
 
     if (parentError || !parent) {
       console.error('Parent not found for family code');
-      return new Response(JSON.stringify({ error: 'Invalid family code' }), {
-        status: 404,
+      return new Response(JSON.stringify({ success: true, message: 'If an account was found, a reset email has been sent to the parent.' }), {
+        status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
