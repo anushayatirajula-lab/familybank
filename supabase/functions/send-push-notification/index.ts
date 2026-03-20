@@ -26,26 +26,14 @@ Deno.serve(async (req) => {
   try {
     logStep("Function started");
 
-    // Verify internal secret - this function is only callable by other edge functions
-    const internalSecret = req.headers.get("x-internal-secret");
-    const cronSecret = Deno.env.get("CRON_SECRET");
-
-    if (!cronSecret || internalSecret !== cronSecret) {
-      logStep("Unauthorized: invalid or missing internal secret");
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
-      );
-    }
-
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
     if (!supabaseUrl || !supabaseServiceKey) {
       throw new Error("Missing Supabase environment variables");
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
     // Parse request body
     const { userId, title, body, data, url }: PushNotificationRequest = await req.json();
@@ -55,8 +43,56 @@ Deno.serve(async (req) => {
       throw new Error("Missing required fields: userId, title, body");
     }
 
+    // Authorization: either internal secret OR authenticated parent of target user
+    const internalSecret = req.headers.get("x-internal-secret");
+    const cronSecret = Deno.env.get("CRON_SECRET");
+    const isInternalCall = cronSecret && internalSecret === cronSecret;
+
+    if (!isInternalCall) {
+      // Must be an authenticated parent of a child with this user_id
+      const authHeader = req.headers.get("Authorization");
+      if (!authHeader?.startsWith("Bearer ")) {
+        return new Response(
+          JSON.stringify({ error: "Unauthorized" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
+        );
+      }
+
+      const supabaseAnon = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+        global: { headers: { Authorization: authHeader } },
+      });
+
+      const token = authHeader.replace("Bearer ", "");
+      const { data: claimsData, error: claimsError } = await supabaseAnon.auth.getClaims(token);
+      if (claimsError || !claimsData?.claims) {
+        return new Response(
+          JSON.stringify({ error: "Unauthorized" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
+        );
+      }
+
+      const callerId = claimsData.claims.sub;
+
+      // Verify caller is parent of a child whose user_id matches the target userId
+      const { data: childRecord, error: childError } = await supabaseAdmin
+        .from("children")
+        .select("id")
+        .eq("parent_id", callerId)
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      // Also allow sending to yourself
+      if (!childRecord && callerId !== userId) {
+        logStep("Authorization failed: caller is not parent of target user");
+        return new Response(
+          JSON.stringify({ error: "Forbidden" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403 }
+        );
+      }
+    }
+
     // Get user's push subscriptions
-    const { data: subscriptions, error: subsError } = await supabase
+    const { data: subscriptions, error: subsError } = await supabaseAdmin
       .from("push_subscriptions")
       .select("*")
       .eq("user_id", userId);
@@ -83,7 +119,7 @@ Deno.serve(async (req) => {
     if (!vapidPublicKey || !vapidPrivateKey) {
       logStep("VAPID keys not configured - notifications cannot be sent");
       
-      await supabase.from("notifications").insert({
+      await supabaseAdmin.from("notifications").insert({
         user_id: userId,
         title,
         body,
@@ -132,7 +168,7 @@ Deno.serve(async (req) => {
           logStep("Push failed", { error: error.message, endpoint: subscription.endpoint.substring(0, 50) });
           
           if (error.message.includes("410") || error.message.includes("404")) {
-            await supabase
+            await supabaseAdmin
               .from("push_subscriptions")
               .delete()
               .eq("id", subscription.id);
@@ -144,7 +180,7 @@ Deno.serve(async (req) => {
     );
 
     // Log notification to database
-    await supabase.from("notifications").insert({
+    await supabaseAdmin.from("notifications").insert({
       user_id: userId,
       title,
       body,
