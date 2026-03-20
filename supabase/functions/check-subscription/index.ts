@@ -12,7 +12,7 @@ const logStep = (step: string, details?: any) => {
   console.log(`[CHECK-SUBSCRIPTION] ${step}${detailsStr}`);
 };
 
-const TRIAL_DAYS = 60;
+const TRIAL_DAYS = 30;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {

@@ -16,7 +16,7 @@ export const SubscriptionBanner = ({ daysRemaining, onSubscribe, isExpired }: Su
         <AlertTitle>Trial Expired</AlertTitle>
         <AlertDescription className="flex items-center justify-between">
           <div>
-            <span>Your 14-day free trial has ended.</span>
+            <span>Your 30-day free trial has ended.</span>
             <p className="text-sm mt-1 opacity-80">Paid subscriptions coming soon!</p>
           </div>
           <Button onClick={onSubscribe} size="sm" className="ml-4" disabled>
