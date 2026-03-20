@@ -122,14 +122,12 @@ export default function ChildWishlist() {
       const tokens = moneyToTokens(money);
 
       if (editingItem) {
-        const { error } = await supabase
-          .from("wishlist_items")
-          .update({
-            title: formData.title,
-            description: formData.description,
-            target_amount: tokens,
-          })
-          .eq("id", editingItem.id);
+        const { error } = await supabase.rpc("fb_update_wishlist_item", {
+          p_item_id: editingItem.id,
+          p_title: formData.title,
+          p_description: formData.description || "",
+          p_target_amount: tokens,
+        });
 
         if (error) throw error;
         toast({ title: "Item updated successfully!" });
