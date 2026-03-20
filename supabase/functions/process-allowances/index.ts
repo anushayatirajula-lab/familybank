@@ -213,8 +213,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message,
-        details: error.toString() 
+        error: "An unexpected error occurred. Please try again."
       }),
       {
         status: 500,

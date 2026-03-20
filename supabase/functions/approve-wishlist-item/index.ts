@@ -211,7 +211,7 @@ serve(async (req: Request) => {
   } catch (error: any) {
     console.error("Error approving wishlist item:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "An unexpected error occurred. Please try again." }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

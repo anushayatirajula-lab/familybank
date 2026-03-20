@@ -202,7 +202,7 @@ Deno.serve(async (req) => {
     const error = err as Error;
     logStep("ERROR", { message: error.message });
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "An unexpected error occurred. Please try again." }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
     );
   }
