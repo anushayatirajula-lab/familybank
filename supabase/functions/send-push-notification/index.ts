@@ -1,9 +1,8 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 interface PushNotificationRequest {
@@ -19,13 +18,25 @@ const logStep = (step: string, details?: any) => {
   console.log(`[SEND-PUSH] ${step}${detailsStr}`);
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     logStep("Function started");
+
+    // Verify internal secret - this function is only callable by other edge functions
+    const internalSecret = req.headers.get("x-internal-secret");
+    const cronSecret = Deno.env.get("CRON_SECRET");
+
+    if (!cronSecret || internalSecret !== cronSecret) {
+      logStep("Unauthorized: invalid or missing internal secret");
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
+      );
+    }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -72,7 +83,6 @@ serve(async (req) => {
     if (!vapidPublicKey || !vapidPrivateKey) {
       logStep("VAPID keys not configured - notifications cannot be sent");
       
-      // Store notification in database for future retrieval
       await supabase.from("notifications").insert({
         user_id: userId,
         title,
@@ -121,7 +131,6 @@ serve(async (req) => {
           const error = err as Error;
           logStep("Push failed", { error: error.message, endpoint: subscription.endpoint.substring(0, 50) });
           
-          // If subscription is invalid, remove it
           if (error.message.includes("410") || error.message.includes("404")) {
             await supabase
               .from("push_subscriptions")
