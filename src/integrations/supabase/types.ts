@@ -546,6 +546,15 @@ export type Database = {
         Returns: boolean
       }
       fb_submit_chore: { Args: { p_chore_id: string }; Returns: boolean }
+      fb_update_wishlist_item: {
+        Args: {
+          p_description: string
+          p_item_id: string
+          p_target_amount: number
+          p_title: string
+        }
+        Returns: boolean
+      }
       generate_family_code: { Args: never; Returns: string }
       has_role: {
         Args: {
