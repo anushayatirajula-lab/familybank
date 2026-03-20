@@ -49,8 +49,7 @@ function escapeHtml(unsafe: string): string {
     if (!validationResult.success) {
       console.error('Validation error:', validationResult.error);
       return new Response(JSON.stringify({ 
-        error: 'Invalid input data',
-        details: validationResult.error.errors 
+        error: 'Invalid input data'
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -58,6 +57,27 @@ function escapeHtml(unsafe: string): string {
     }
 
     const { familyCode, childUsername } = validationResult.data;
+
+    // Rate limiting: max 3 requests per family code per 15 minutes
+    const rateLimitKey = `reset_pwd:${familyCode.toUpperCase()}`;
+    const windowStart = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+
+    const { count, error: countError } = await supabaseAdmin
+      .from('rate_limits')
+      .select('id', { count: 'exact', head: true })
+      .eq('key', rateLimitKey)
+      .gte('attempted_at', windowStart);
+
+    if (!countError && (count ?? 0) >= 3) {
+      console.log('Rate limit exceeded for key:', rateLimitKey);
+      return new Response(JSON.stringify({ error: 'Too many requests. Please try again later.' }), {
+        status: 429,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Retry-After': '900' },
+      });
+    }
+
+    // Record this attempt
+    await supabaseAdmin.from('rate_limits').insert({ key: rateLimitKey });
 
     // Find the parent by family code
     const { data: parent, error: parentError } = await supabaseAdmin
