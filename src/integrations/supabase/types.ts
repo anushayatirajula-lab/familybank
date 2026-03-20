@@ -531,6 +531,10 @@ export type Database = {
       }
     }
     Functions: {
+      child_set_first_login_done: {
+        Args: { p_child_id: string }
+        Returns: boolean
+      }
       fb_approve_chore: { Args: { p_chore: string }; Returns: boolean }
       fb_split_into_jars: {
         Args: {
