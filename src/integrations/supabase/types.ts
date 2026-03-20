@@ -545,6 +545,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      fb_submit_chore: { Args: { p_chore_id: string }; Returns: boolean }
       generate_family_code: { Args: never; Returns: string }
       has_role: {
         Args: {
