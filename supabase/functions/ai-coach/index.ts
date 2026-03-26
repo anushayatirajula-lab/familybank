@@ -119,10 +119,13 @@ const handler = async (req: Request): Promise<Response> => {
     // Build context string
     let childContext = "\n\nCHILD'S FINANCIAL CONTEXT (use this to personalize your responses):";
     
+    // Helper: amounts are stored with a 10x multiplier (10 units = $1.00)
+    const fmt = (amt: number) => (amt / 10).toFixed(2);
+
     if (balances.length > 0) {
       const totalBalance = balances.reduce((sum: number, b: any) => sum + (b.amount || 0), 0);
-      const jarSummary = balances.map((b: any) => `${b.jar_type}: $${(b.amount || 0).toFixed(2)}`).join(', ');
-      childContext += `\n- Current Balances: ${jarSummary} (Total: $${totalBalance.toFixed(2)})`;
+      const jarSummary = balances.map((b: any) => `${b.jar_type}: $${fmt(b.amount || 0)}`).join(', ');
+      childContext += `\n- Current Balances: ${jarSummary} (Total: $${fmt(totalBalance)})`;
     } else {
       childContext += "\n- No balances yet (they're just getting started!)";
     }
