@@ -134,7 +134,7 @@ const handler = async (req: Request): Promise<Response> => {
       const goals = wishlistItems.map((w: any) => {
         const progress = w.target_amount > 0 ? Math.round(((w.current_amount || 0) / w.target_amount) * 100) : 0;
         const status = w.approved_by_parent ? '✅ approved' : '⏳ pending approval';
-        return `"${w.title}" - $${(w.current_amount || 0).toFixed(2)}/$${w.target_amount.toFixed(2)} (${progress}%, ${status})`;
+        return `"${w.title}" - $${fmt(w.current_amount || 0)}/$${fmt(w.target_amount)} (${progress}%, ${status})`;
       }).join('; ');
       childContext += `\n- Savings Goals: ${goals}`;
     } else {
