@@ -143,7 +143,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (recentTransactions.length > 0) {
       const txSummary = recentTransactions.slice(0, 5).map((t: any) => 
-        `${t.transaction_type}: $${t.amount.toFixed(2)} to ${t.jar_type}${t.description ? ` (${t.description})` : ''}`
+        `${t.transaction_type}: $${fmt(t.amount)} to ${t.jar_type}${t.description ? ` (${t.description})` : ''}`
       ).join('; ');
       childContext += `\n- Recent Activity: ${txSummary}`;
     } else {
