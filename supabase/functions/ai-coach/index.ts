@@ -105,13 +105,57 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
+    // Fetch child's financial context for personalized coaching
+    const [balancesRes, wishlistRes, transactionsRes] = await Promise.all([
+      supabase.from('balances').select('jar_type, amount').eq('child_id', childId),
+      supabase.from('wishlist_items').select('title, target_amount, current_amount, approved_by_parent, is_purchased').eq('child_id', childId).eq('is_purchased', false).limit(10),
+      supabase.from('transactions').select('jar_type, amount, transaction_type, description, created_at').eq('child_id', childId).order('created_at', { ascending: false }).limit(15),
+    ]);
+
+    const balances = balancesRes.data || [];
+    const wishlistItems = wishlistRes.data || [];
+    const recentTransactions = transactionsRes.data || [];
+
+    // Build context string
+    let childContext = "\n\nCHILD'S FINANCIAL CONTEXT (use this to personalize your responses):";
+    
+    if (balances.length > 0) {
+      const totalBalance = balances.reduce((sum: number, b: any) => sum + (b.amount || 0), 0);
+      const jarSummary = balances.map((b: any) => `${b.jar_type}: $${(b.amount || 0).toFixed(2)}`).join(', ');
+      childContext += `\n- Current Balances: ${jarSummary} (Total: $${totalBalance.toFixed(2)})`;
+    } else {
+      childContext += "\n- No balances yet (they're just getting started!)";
+    }
+
+    if (wishlistItems.length > 0) {
+      const goals = wishlistItems.map((w: any) => {
+        const progress = w.target_amount > 0 ? Math.round(((w.current_amount || 0) / w.target_amount) * 100) : 0;
+        const status = w.approved_by_parent ? '✅ approved' : '⏳ pending approval';
+        return `"${w.title}" - $${(w.current_amount || 0).toFixed(2)}/$${w.target_amount.toFixed(2)} (${progress}%, ${status})`;
+      }).join('; ');
+      childContext += `\n- Savings Goals: ${goals}`;
+    } else {
+      childContext += "\n- No savings goals set yet";
+    }
+
+    if (recentTransactions.length > 0) {
+      const txSummary = recentTransactions.slice(0, 5).map((t: any) => 
+        `${t.transaction_type}: $${t.amount.toFixed(2)} to ${t.jar_type}${t.description ? ` (${t.description})` : ''}`
+      ).join('; ');
+      childContext += `\n- Recent Activity: ${txSummary}`;
+    } else {
+      childContext += "\n- No recent transactions";
+    }
+
+    childContext += "\n\nUse the above context to give specific, personalized advice. Reference their actual numbers, goals, and progress when relevant. Don't just repeat the data back - weave it naturally into your coaching.";
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    console.log("AI Coach request:", { childAge, mode, messageCount: messages.length });
+    console.log("AI Coach request:", { childAge, mode, messageCount: messages.length, hasContext: balances.length > 0 });
 
     // Age-appropriate system prompts
     let systemPrompt = "";
@@ -203,7 +247,7 @@ RULES:
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [
-          { role: "system", content: systemPrompt },
+          { role: "system", content: systemPrompt + childContext },
           ...messages,
         ],
         temperature: 0.7,
