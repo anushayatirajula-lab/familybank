@@ -119,10 +119,13 @@ const handler = async (req: Request): Promise<Response> => {
     // Build context string
     let childContext = "\n\nCHILD'S FINANCIAL CONTEXT (use this to personalize your responses):";
     
+    // Helper: amounts are stored with a 10x multiplier (10 units = $1.00)
+    const fmt = (amt: number) => (amt / 10).toFixed(2);
+
     if (balances.length > 0) {
       const totalBalance = balances.reduce((sum: number, b: any) => sum + (b.amount || 0), 0);
-      const jarSummary = balances.map((b: any) => `${b.jar_type}: $${(b.amount || 0).toFixed(2)}`).join(', ');
-      childContext += `\n- Current Balances: ${jarSummary} (Total: $${totalBalance.toFixed(2)})`;
+      const jarSummary = balances.map((b: any) => `${b.jar_type}: $${fmt(b.amount || 0)}`).join(', ');
+      childContext += `\n- Current Balances: ${jarSummary} (Total: $${fmt(totalBalance)})`;
     } else {
       childContext += "\n- No balances yet (they're just getting started!)";
     }
@@ -131,7 +134,7 @@ const handler = async (req: Request): Promise<Response> => {
       const goals = wishlistItems.map((w: any) => {
         const progress = w.target_amount > 0 ? Math.round(((w.current_amount || 0) / w.target_amount) * 100) : 0;
         const status = w.approved_by_parent ? '✅ approved' : '⏳ pending approval';
-        return `"${w.title}" - $${(w.current_amount || 0).toFixed(2)}/$${w.target_amount.toFixed(2)} (${progress}%, ${status})`;
+        return `"${w.title}" - $${fmt(w.current_amount || 0)}/$${fmt(w.target_amount)} (${progress}%, ${status})`;
       }).join('; ');
       childContext += `\n- Savings Goals: ${goals}`;
     } else {
@@ -140,7 +143,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (recentTransactions.length > 0) {
       const txSummary = recentTransactions.slice(0, 5).map((t: any) => 
-        `${t.transaction_type}: $${t.amount.toFixed(2)} to ${t.jar_type}${t.description ? ` (${t.description})` : ''}`
+        `${t.transaction_type}: $${fmt(t.amount)} to ${t.jar_type}${t.description ? ` (${t.description})` : ''}`
       ).join('; ');
       childContext += `\n- Recent Activity: ${txSummary}`;
     } else {
