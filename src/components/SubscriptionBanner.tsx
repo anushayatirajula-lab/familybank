@@ -17,7 +17,7 @@ export const SubscriptionBanner = ({ daysRemaining, onSubscribe, isExpired }: Su
         <AlertDescription className="flex items-center justify-between">
           <div>
             <span>Your 30-day free trial has ended.</span>
-            <p className="text-sm mt-1 opacity-80">Paid subscriptions coming soon!</p>
+            <p className="text-sm mt-1 opacity-80">Subscribe to continue using FamilyBank.</p>
           </div>
           <Button onClick={onSubscribe} size="sm" className="ml-4">
             <CreditCard className="mr-2 h-4 w-4" />
