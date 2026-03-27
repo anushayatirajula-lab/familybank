@@ -19,9 +19,9 @@ export const SubscriptionBanner = ({ daysRemaining, onSubscribe, isExpired }: Su
             <span>Your 30-day free trial has ended.</span>
             <p className="text-sm mt-1 opacity-80">Paid subscriptions coming soon!</p>
           </div>
-          <Button onClick={onSubscribe} size="sm" className="ml-4" disabled>
+          <Button onClick={onSubscribe} size="sm" className="ml-4">
             <CreditCard className="mr-2 h-4 w-4" />
-            Coming Soon
+            Subscribe Now
           </Button>
         </AlertDescription>
       </Alert>
@@ -36,11 +36,11 @@ export const SubscriptionBanner = ({ daysRemaining, onSubscribe, isExpired }: Su
         <AlertDescription className="flex items-center justify-between text-amber-800 dark:text-amber-200">
           <div>
             <span>Your free trial ends in {daysRemaining} day{daysRemaining !== 1 ? 's' : ''}.</span>
-            <p className="text-sm mt-1 opacity-80">Paid subscriptions coming soon!</p>
+            <p className="text-sm mt-1 opacity-80">Subscribe now to keep using FamilyBank.</p>
           </div>
-          <Button onClick={onSubscribe} size="sm" variant="outline" className="ml-4" disabled>
+          <Button onClick={onSubscribe} size="sm" variant="outline" className="ml-4">
             <CreditCard className="mr-2 h-4 w-4" />
-            Coming Soon
+            Subscribe Now
           </Button>
         </AlertDescription>
       </Alert>
@@ -55,11 +55,10 @@ export const SubscriptionBanner = ({ daysRemaining, onSubscribe, isExpired }: Su
         <AlertDescription className="flex items-center justify-between">
           <div>
             <span>You have {daysRemaining} days left in your free trial. Enjoy all features!</span>
-            <p className="text-sm mt-1 font-medium text-primary">Paid subscriptions coming soon!</p>
           </div>
-          <Button onClick={onSubscribe} size="sm" variant="outline" className="ml-4" disabled>
+          <Button onClick={onSubscribe} size="sm" variant="outline" className="ml-4">
             <CreditCard className="mr-2 h-4 w-4" />
-            Coming Soon
+            Subscribe Now
           </Button>
         </AlertDescription>
       </Alert>
