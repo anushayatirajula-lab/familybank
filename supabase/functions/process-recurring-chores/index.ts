@@ -25,19 +25,53 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
-  // Validate CRON_SECRET to prevent unauthorized invocations
-  const cronSecret = req.headers.get("X-Cron-Secret");
-  const expectedSecret = Deno.env.get("CRON_SECRET");
-  if (!expectedSecret || cronSecret !== expectedSecret) {
-    return new Response(
-      JSON.stringify({ error: "Unauthorized" }),
-      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  }
-
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    // Allow either CRON_SECRET header or authenticated parent user
+    const cronSecret = req.headers.get("X-Cron-Secret");
+    const expectedSecret = Deno.env.get("CRON_SECRET");
+    const isCronCall = expectedSecret && cronSecret === expectedSecret;
+
+    if (!isCronCall) {
+      // Verify the caller is an authenticated parent
+      const authHeader = req.headers.get("Authorization");
+      if (!authHeader) {
+        return new Response(
+          JSON.stringify({ error: "Unauthorized" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const supabaseAuth = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+        global: { headers: { Authorization: authHeader } },
+      });
+
+      const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
+      if (authError || !user) {
+        return new Response(
+          JSON.stringify({ error: "Unauthorized" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Verify user is a parent
+      const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+      const { data: roleData } = await supabaseAdmin
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "PARENT")
+        .maybeSingle();
+
+      if (!roleData) {
+        return new Response(
+          JSON.stringify({ error: "Forbidden: Only parents can trigger this" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
