@@ -20,7 +20,6 @@ interface RecurringChore {
 }
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -29,13 +28,13 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Allow either CRON_SECRET header or authenticated parent user
     const cronSecret = req.headers.get("X-Cron-Secret");
     const expectedSecret = Deno.env.get("CRON_SECRET");
     const isCronCall = expectedSecret && cronSecret === expectedSecret;
 
+    let parentId: string | null = null;
+
     if (!isCronCall) {
-      // Verify the caller is an authenticated parent
       const authHeader = req.headers.get("Authorization");
       if (!authHeader) {
         return new Response(
@@ -56,7 +55,6 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Verify user is a parent
       const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
       const { data: roleData } = await supabaseAdmin
         .from("user_roles")
@@ -71,24 +69,50 @@ Deno.serve(async (req) => {
           { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
+
+      parentId = user.id;
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const today = new Date();
-    const dayOfWeek = today.getDay(); // 0 = Sunday, 6 = Saturday
+    const dayOfWeek = today.getDay();
 
-    console.log(`Processing recurring chores for day: ${dayOfWeek}`);
+    console.log(`Processing recurring chores for day: ${dayOfWeek}, parentId: ${parentId || "ALL (cron)"}`);
 
-    // Get all recurring chores that should be created today
-    // Daily chores: create every day
-    // Weekly chores: create on the specified day
-    const { data: recurringChores, error: fetchError } = await supabase
+    // If called by a parent, only get their children's IDs
+    let childIds: string[] | null = null;
+    if (parentId) {
+      const { data: children, error: childError } = await supabase
+        .from("children")
+        .select("id")
+        .eq("parent_id", parentId);
+
+      if (childError) throw childError;
+      childIds = (children || []).map((c) => c.id);
+
+      if (childIds.length === 0) {
+        return new Response(
+          JSON.stringify({ success: true, message: "No children found for this parent." }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+        );
+      }
+    }
+
+    // Build query for recurring chore templates
+    let query = supabase
       .from("chores")
       .select("*")
       .eq("is_recurring", true)
-      .eq("status", "APPROVED") // Only create from approved templates
-      .is("parent_chore_id", null); // Only get template chores
+      .eq("status", "APPROVED")
+      .is("parent_chore_id", null);
+
+    // Scope to parent's children when triggered by a parent
+    if (childIds) {
+      query = query.in("child_id", childIds);
+    }
+
+    const { data: recurringChores, error: fetchError } = await query;
 
     if (fetchError) {
       console.error("Error fetching recurring chores:", fetchError);
@@ -105,7 +129,6 @@ Deno.serve(async (req) => {
       if (chore.recurrence_type === "daily") {
         shouldCreate = true;
       } else if (chore.recurrence_type === "weekly") {
-        // Check recurrence_days array first, fall back to recurrence_day for backward compat
         if (chore.recurrence_days && Array.isArray(chore.recurrence_days)) {
           shouldCreate = chore.recurrence_days.includes(dayOfWeek);
         } else if (chore.recurrence_day === dayOfWeek) {
@@ -114,7 +137,6 @@ Deno.serve(async (req) => {
       }
 
       if (shouldCreate) {
-        // Check if a chore from this template was already created today
         const startOfDay = new Date(today);
         startOfDay.setHours(0, 0, 0, 0);
 
@@ -171,20 +193,14 @@ Deno.serve(async (req) => {
         success: true,
         message: `Processed ${recurringChores?.length || 0} templates, created ${choresToCreate.length} new chores`,
       }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred. Please try again.";
     console.error("Error processing recurring chores:", error);
     return new Response(
-      JSON.stringify({ error: errorMessage }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
-      }
+      JSON.stringify({ error: "An unexpected error occurred. Please try again." }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
     );
   }
 });
