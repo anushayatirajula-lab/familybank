@@ -37,11 +37,13 @@ Deno.serve(async (req) => {
 
     console.log(`[CLEANUP-CHORES] Deleting approved chores older than: ${cutoffDate}`);
 
-    // Delete approved chores that are older than 30 days
+    // Delete approved chores older than 30 days, but NEVER delete recurring templates
+    // (templates have is_recurring = true AND parent_chore_id IS NULL — they generate daily instances)
     const { data: deletedChores, error } = await supabase
       .from("chores")
       .delete()
       .eq("status", "APPROVED")
+      .eq("is_recurring", false)
       .lt("approved_at", cutoffDate)
       .select("id, title");
 
