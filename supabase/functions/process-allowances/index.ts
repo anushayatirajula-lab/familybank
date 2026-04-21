@@ -184,8 +184,8 @@ serve(async (req) => {
           `
             <h2>Weekly Allowance Processed</h2>
             <p>Hello!</p>
-            <p>The weekly allowance of <strong>${notification.amount.toFixed(2)} tokens</strong> has been automatically paid to <strong>${notification.childName}</strong>.</p>
-            <p>The tokens have been distributed across their savings jars according to your configured percentages.</p>
+            <p>The weekly allowance of <strong>$${notification.amount.toFixed(2)}</strong> has been automatically paid to <strong>${notification.childName}</strong>.</p>
+            <p>The amount has been distributed across their savings jars according to your configured percentages.</p>
             <p>Best regards,<br>FamilyBank</p>
           `
         );

@@ -19,163 +19,99 @@ serve(async (req: Request) => {
   }
 
   try {
-    // 1. Verify authentication - get the auth header
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      console.error("Missing or invalid authorization header");
+    // 1. Verify authentication
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
       return new Response(
-        JSON.stringify({ error: 'Unauthorized - Missing authorization' }),
+        JSON.stringify({ error: "Unauthorized - Missing authorization" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // 2. Create authenticated client to verify user
-    const supabaseAuth = createClient(
+    // 2. User-scoped client to forward the JWT into the RPC (so auth.uid() works inside SECURITY DEFINER)
+    const supabaseUser = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? "",
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    // 3. Verify the user and get their ID using getClaims for proper JWT validation
-    const token = authHeader.replace('Bearer ', '');
-    const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
-    
-    if (claimsError || !claimsData?.claims?.sub) {
-      console.error("Failed to verify user:", claimsError);
+    const token = authHeader.replace("Bearer ", "");
+    const { data: userData, error: userError } = await supabaseUser.auth.getUser(token);
+    if (userError || !userData?.user) {
       return new Response(
-        JSON.stringify({ error: 'Unauthorized - Invalid token' }),
+        JSON.stringify({ error: "Unauthorized - Invalid token" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+    const userId = userData.user.id;
 
-    const userId = claimsData.claims.sub;
-    console.log("Authenticated user:", userId);
-
-    // 4. Create service role client for database operations
+    // 3. Service-role client for admin lookups & item read
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
     const { wishlist_item_id }: ApproveWishlistRequest = await req.json();
-
     if (!wishlist_item_id) {
       return new Response(
-        JSON.stringify({ error: 'Missing wishlist_item_id' }),
+        JSON.stringify({ error: "Missing wishlist_item_id" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log("Processing wishlist approval for item:", wishlist_item_id);
-
-    // 5. Get wishlist item details with child and parent info
+    // 4. Read item + child for the email payload (auth check is done atomically in the RPC below)
     const { data: wishlistItem, error: itemError } = await supabase
       .from("wishlist_items")
-      .select(`
-        *,
-        children (
-          id,
-          name,
-          parent_id,
-          profiles!children_parent_id_fkey (email)
-        )
-      `)
+      .select("id, title, description, target_amount, child_id, children:children!wishlist_items_child_id_fkey(id, name, parent_id)")
       .eq("id", wishlist_item_id)
       .single();
 
     if (itemError || !wishlistItem) {
-      console.error("Wishlist item not found:", itemError);
       return new Response(
-        JSON.stringify({ error: 'Wishlist item not found' }),
+        JSON.stringify({ error: "Wishlist item not found" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const child = wishlistItem.children;
-
-    // 6. CRITICAL: Verify the authenticated user is the parent of this child
-    if (child.parent_id !== userId) {
-      console.error(`Authorization failed: user ${userId} attempted to approve item for parent ${child.parent_id}`);
+    const child = (wishlistItem as any).children;
+    if (!child || child.parent_id !== userId) {
       return new Response(
-        JSON.stringify({ error: 'Unauthorized - Only the parent can approve this wishlist item' }),
+        JSON.stringify({ error: "Unauthorized - Only the parent can approve this wishlist item" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log(`User ${userId} authorized to approve wishlist item ${wishlist_item_id}`);
+    // 5. Atomic spend via RPC (locks the balance row, deducts, inserts transaction, marks purchased)
+    const { error: rpcError } = await supabaseUser.rpc("fb_spend_wishlist", {
+      p_item_id: wishlist_item_id,
+    });
 
-    const parentEmail = child.profiles?.email;
-    const amount = wishlistItem.target_amount;
-
-    console.log("Wishlist item:", wishlistItem.title, "Amount:", amount, "Child:", child.name);
-
-    // Check WISHLIST jar balance
-    const { data: balance, error: balanceError } = await supabase
-      .from("balances")
-      .select("amount")
-      .eq("child_id", child.id)
-      .eq("jar_type", "WISHLIST")
-      .single();
-
-    if (balanceError || !balance || balance.amount < amount) {
+    if (rpcError) {
+      console.error("fb_spend_wishlist failed:", rpcError);
+      const msg = rpcError.message || "";
+      const status = msg.includes("Insufficient") ? 400
+        : msg.includes("Unauthorized") ? 403
+        : msg.includes("not found") ? 404
+        : 500;
       return new Response(
-        JSON.stringify({ error: 'Insufficient balance in WISHLIST jar' }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: msg || "Failed to approve wishlist item" }),
+        { status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log("Current balance:", balance.amount);
-
-    // Deduct from WISHLIST jar
-    const { error: updateBalanceError } = await supabase
-      .from("balances")
-      .update({ amount: balance.amount - amount })
-      .eq("child_id", child.id)
-      .eq("jar_type", "WISHLIST");
-
-    if (updateBalanceError) {
-      throw updateBalanceError;
+    // 6. Look up parent email via Auth Admin API (the profiles table no longer stores email)
+    let parentEmail: string | undefined;
+    try {
+      const { data: parentAuth } = await supabase.auth.admin.getUserById(child.parent_id);
+      parentEmail = parentAuth?.user?.email ?? undefined;
+    } catch (e) {
+      console.error("Failed to fetch parent email:", e);
     }
 
-    console.log("Balance updated, new amount:", balance.amount - amount);
-
-    // Create transaction
-    const { error: transactionError } = await supabase
-      .from("transactions")
-      .insert({
-        child_id: child.id,
-        jar_type: "WISHLIST",
-        amount: -amount,
-        transaction_type: "WISHLIST_SPEND",
-        reference_id: wishlist_item_id,
-        description: `Purchased: ${wishlistItem.title}`,
-      });
-
-    if (transactionError) {
-      throw transactionError;
-    }
-
-    console.log("Transaction recorded");
-
-    // Mark item as approved and purchased
-    const { error: updateItemError } = await supabase
-      .from("wishlist_items")
-      .update({
-        approved_by_parent: true,
-        is_purchased: true,
-      })
-      .eq("id", wishlist_item_id);
-
-    if (updateItemError) {
-      throw updateItemError;
-    }
-
-    console.log("Wishlist item marked as purchased");
-
-    // Send email notification
+    // 7. Send email notification (non-blocking)
     if (parentEmail) {
       try {
-        const emailResponse = await resend.emails.send({
+        await resend.emails.send({
           from: "Family Finance <onboarding@resend.dev>",
           to: [parentEmail],
           subject: `Wishlist Item Approved: ${wishlistItem.title}`,
@@ -184,8 +120,8 @@ serve(async (req: Request) => {
             <p>You've approved <strong>${child.name}'s</strong> wishlist item:</p>
             <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0;">
               <h3 style="margin: 0 0 10px 0;">${wishlistItem.title}</h3>
-              ${wishlistItem.description ? `<p style="margin: 0 0 10px 0; color: #666;">${wishlistItem.description}</p>` : ''}
-              <p style="margin: 0; font-size: 20px; font-weight: bold; color: #4F46E5;">$${amount.toFixed(2)}</p>
+              ${wishlistItem.description ? `<p style="margin: 0 0 10px 0; color: #666;">${wishlistItem.description}</p>` : ""}
+              <p style="margin: 0; font-size: 20px; font-weight: bold; color: #4F46E5;">$${Number(wishlistItem.target_amount).toFixed(2)}</p>
             </div>
             <p>The amount has been deducted from ${child.name}'s WISHLIST jar.</p>
             <p style="color: #666; font-size: 14px; margin-top: 30px;">
@@ -193,29 +129,21 @@ serve(async (req: Request) => {
             </p>
           `,
         });
-
-        console.log("Email sent:", emailResponse);
       } catch (emailError) {
         console.error("Failed to send email:", emailError);
-        // Don't throw - email failure shouldn't block the approval
+        // Don't throw — email failure should not block the approval
       }
     }
 
     return new Response(
       JSON.stringify({ success: true, message: "Wishlist item approved and purchased" }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: any) {
     console.error("Error approving wishlist item:", error);
     return new Response(
       JSON.stringify({ error: "An unexpected error occurred. Please try again." }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });

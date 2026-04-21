@@ -554,6 +554,7 @@ export type Database = {
         Returns: boolean
       }
       fb_approve_chore: { Args: { p_chore: string }; Returns: boolean }
+      fb_spend_wishlist: { Args: { p_item_id: string }; Returns: boolean }
       fb_split_into_jars: {
         Args: {
           p_amount: number
