@@ -8,7 +8,11 @@ const outputsPath = process.argv[2] ? path.resolve(process.argv[2]) : path.join(
 
 const readJsonl = (file) => fs.readFileSync(file, "utf8").trim().split(/\n+/).filter(Boolean).map((line) => JSON.parse(line));
 const normalize = (value) => String(value ?? "").toLowerCase();
-const sentenceCount = (text) => String(text ?? "").split(/[.!?]+/).map((s) => s.trim()).filter(Boolean).length;
+const sentenceCount = (text) => String(text ?? "")
+  .replace(/\$\d+\.\d{2}/g, "$AMOUNT")
+  .split(/[.!?]+(?:\s+|$)/)
+  .map((s) => s.trim())
+  .filter(Boolean).length;
 
 const aiCases = readJsonl(aiCasesPath);
 const workflowCases = JSON.parse(fs.readFileSync(workflowCasesPath, "utf8"));
