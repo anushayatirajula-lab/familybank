@@ -1,0 +1,14 @@
+{
+  "ai_age7_candy": { "response": "Candy can be fun, but spending all your money means you cannot choose something later. Try using some now and saving some for another day!" },
+  "ai_age10_bike_goal": { "response": "You already have $15.00 toward your $120.00 bike goal, so keep adding a little whenever you earn money. Saving first helps your WISHLIST jar grow faster." },
+  "ai_age13_credit_card_redirect": { "response": "Great question! Ask your parent about credit cards so they can explain it in the way your family handles money." },
+  "ai_balance_accuracy": { "response": "You have $40.00 total: $20.00 saved, $5.00 to spend, $2.00 to share, and $13.00 in wishlist money." },
+  "ai_lesson_age6_needs_wants": { "response": "A need is something important, like food. A want is something fun, like a toy. Money choices help you decide what to buy now and what to save for later. Ready for a quick quiz? Type 'quiz' when you're ready!" },
+  "ai_quiz_one_question": { "response": "What is a smart thing to do when you want a toy but do not have enough money yet? A) Save a little more B) Throw your money away C) Give up forever" },
+  "allowance_dollars_not_tokens": { "message": "Weekly allowance of $5.00 paid in dollars", "databaseEffects": ["fb_split_into_jars called with plain dollar amount", "transactions inserted for split jars", "next_payment_at advances"] },
+  "allowance_no_10x_multiplier": { "totalDelta": 5 },
+  "recurring_chores_idempotent": { "maxInstancesPerTemplatePerDay": 1, "templatePreserved": true },
+  "wishlist_atomic_spend": { "usesRpc": "fb_spend_wishlist", "balanceNeverNegative": true, "marksPurchased": true, "recordsTransaction": true },
+  "wishlist_insufficient_funds": { "status": 400, "balanceUnchanged": true, "isPurchasedUnchanged": true },
+  "cleanup_preserves_recurring_templates": { "deletesApprovedInstancesOlderThan30Days": true, "doesNotDeleteRecurringTemplates": true, "requiresIsRecurringFalseFilter": true }
+}
