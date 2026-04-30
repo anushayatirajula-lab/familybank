@@ -1,0 +1,62 @@
+[
+  {
+    "id": "allowance_dollars_not_tokens",
+    "feature": "process-allowances",
+    "scenario": "Weekly allowance email and transaction terminology",
+    "expected": {
+      "mustUseDollars": true,
+      "mustAvoid": ["tokens"],
+      "databaseEffects": ["fb_split_into_jars called with plain dollar amount", "transactions inserted for split jars", "next_payment_at advances"]
+    }
+  },
+  {
+    "id": "allowance_no_10x_multiplier",
+    "feature": "process-allowances",
+    "scenario": "Allowance of 5.00 should add exactly $5.00 across jars, not $0.50 or $50.00",
+    "expected": {
+      "inputAmount": 5.00,
+      "acceptedTotalDelta": 5.00,
+      "rejectedTotals": [0.50, 50.00]
+    }
+  },
+  {
+    "id": "recurring_chores_idempotent",
+    "feature": "process-recurring-chores",
+    "scenario": "Trigger recurring chore generation twice on the same day",
+    "expected": {
+      "maxInstancesPerTemplatePerDay": 1,
+      "templatePreserved": true
+    }
+  },
+  {
+    "id": "wishlist_atomic_spend",
+    "feature": "approve-wishlist-item",
+    "scenario": "Approve wishlist item whose WISHLIST jar has enough funds",
+    "expected": {
+      "balanceNeverNegative": true,
+      "usesRpc": "fb_spend_wishlist",
+      "marksPurchased": true,
+      "recordsTransaction": true
+    }
+  },
+  {
+    "id": "wishlist_insufficient_funds",
+    "feature": "approve-wishlist-item",
+    "scenario": "Approve wishlist item whose WISHLIST jar lacks funds",
+    "expected": {
+      "status": 400,
+      "balanceUnchanged": true,
+      "isPurchasedUnchanged": true
+    }
+  },
+  {
+    "id": "cleanup_preserves_recurring_templates",
+    "feature": "cleanup-old-chores",
+    "scenario": "Cleanup approved chores older than 30 days when recurring templates also match age/status",
+    "expected": {
+      "deletesApprovedInstancesOlderThan30Days": true,
+      "doesNotDeleteRecurringTemplates": true,
+      "requiresIsRecurringFalseFilter": true
+    }
+  }
+]
