@@ -266,4 +266,44 @@ supabase/
 
 ---
 
+## Evaluation Workflow
+
+FamilyBank includes a lightweight evaluation suite under `evals/familybank/` for AI Coach and backend workflow regression testing.
+
+### Braintrust setup
+
+1. Create a Braintrust project named `FamilyBank Evaluations`.
+2. Import `evals/familybank/ai-coach-cases.jsonl` as an AI Coach dataset.
+3. Import `evals/familybank/workflow-cases.json` as workflow test documentation or convert each item into an experiment case.
+4. For AI Coach cases, call the `ai-coach` function with each case's `input.childAge`, `input.message`, and `mode`.
+5. Score outputs for forbidden topics, dollar accuracy, age appropriateness, response length, and required personalization.
+
+### Local regression check
+
+Save captured outputs in this shape:
+
+```json
+{
+  "ai_balance_accuracy": {
+    "response": "You have $40.00 total..."
+  },
+  "wishlist_atomic_spend": {
+    "usesRpc": "fb_spend_wishlist",
+    "balanceNeverNegative": true,
+    "marksPurchased": true,
+    "recordsTransaction": true
+  }
+}
+```
+
+Then run:
+
+```bash
+node scripts/run-familybank-evals.mjs evals/familybank/sample-outputs.json
+```
+
+The runner exits non-zero when any case fails, so it can be used before prompt, database, or workflow changes.
+
+---
+
 Built with [Lovable](https://lovable.dev)
