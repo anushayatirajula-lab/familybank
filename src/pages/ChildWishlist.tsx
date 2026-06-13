@@ -277,6 +277,15 @@ export default function ChildWishlist() {
           </Dialog>
         </div>
 
+        {items.filter((i) => !i.is_purchased).length >= 3 && (
+          <Card className="border-dashed border-primary/40 bg-primary/5 mb-4">
+            <CardContent className="py-4 text-center text-sm">
+              <p className="font-medium mb-1">Free plan limit: 3 active wishlist items</p>
+              <p className="text-muted-foreground">Ask your parent to upgrade to Premium for unlimited items.</p>
+            </CardContent>
+          </Card>
+        )}
+
         {items.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16">

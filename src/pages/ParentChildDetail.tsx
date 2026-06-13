@@ -28,6 +28,7 @@ import { JarPercentageEditor } from "@/components/JarPercentageEditor";
 import { EditChildProfile } from "@/components/EditChildProfile";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSignedAvatar } from "@/hooks/use-signed-avatar";
+import { useSubscription } from "@/hooks/use-subscription";
 
 interface Chore {
   id: string;
@@ -59,6 +60,7 @@ const ParentChildDetail = () => {
   const [newPassword, setNewPassword] = useState("");
   const [resettingPassword, setResettingPassword] = useState(false);
   const childAvatarUrl = useSignedAvatar(child?.avatar_url);
+  const subscription = useSubscription();
 
   useEffect(() => {
     checkAuth();
@@ -334,39 +336,41 @@ const ParentChildDetail = () => {
               Back to Dashboard
             </Button>
             <div className="flex gap-2">
-              <Dialog open={resetPasswordOpen} onOpenChange={(open) => { setResetPasswordOpen(open); if (!open) setNewPassword(""); }}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <KeyRound className="mr-2 h-4 w-4" />
-                    Reset Password
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Reset {child.name}'s Password</DialogTitle>
-                    <DialogDescription>
-                      Enter a new password for {child.name}. Share it with them securely.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-2 py-4">
-                    <Label htmlFor="newPassword">New Password</Label>
-                    <Input
-                      id="newPassword"
-                      type="password"
-                      placeholder="Min 6 characters"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      minLength={6}
-                    />
-                  </div>
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setResetPasswordOpen(false)}>Cancel</Button>
-                    <Button onClick={handleResetChildPassword} disabled={resettingPassword || newPassword.length < 6}>
-                      {resettingPassword ? "Resetting..." : "Reset Password"}
+              {subscription.isPremium && (
+                <Dialog open={resetPasswordOpen} onOpenChange={(open) => { setResetPasswordOpen(open); if (!open) setNewPassword(""); }}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <KeyRound className="mr-2 h-4 w-4" />
+                      Reset Password
                     </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Reset {child.name}'s Password</DialogTitle>
+                      <DialogDescription>
+                        Enter a new password for {child.name}. Share it with them securely.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-2 py-4">
+                      <Label htmlFor="newPassword">New Password</Label>
+                      <Input
+                        id="newPassword"
+                        type="password"
+                        placeholder="Min 6 characters"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        minLength={6}
+                      />
+                    </div>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setResetPasswordOpen(false)}>Cancel</Button>
+                      <Button onClick={handleResetChildPassword} disabled={resettingPassword || newPassword.length < 6}>
+                        {resettingPassword ? "Resetting..." : "Reset Password"}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              )}
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="destructive" size="sm">
