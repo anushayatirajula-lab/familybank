@@ -85,7 +85,7 @@ Deno.serve(async (req) => {
               <li>Unlimited AI coach sessions</li>
               <li>Custom jar percentages & push notifications</li>
             </ul>
-            <p>When your trial ends you'll be moved to the Free plan (1 child, 3 AI sessions/month, manual allowances only). Keep everything by upgrading for <strong>$4.99/mo</strong>.</p>
+            <p>When your trial ends you'll be moved to the Free plan (1 child, 5 active chores/child, 10 AI sessions/month, manual allowances only). Keep everything by upgrading for <strong>$4.99/mo</strong>.</p>
             <p style="margin:24px 0">
               <a href="https://familybank.lovable.app/pricing"
                  style="background:#4f46e5;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block">

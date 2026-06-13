@@ -113,11 +113,11 @@ const handler = async (req: Request): Promise<Response> => {
     );
     if (usageError) {
       console.error('AI coach usage RPC failed:', usageError);
-    } else if (typeof usageCount === 'number' && usageCount !== -1 && usageCount > 3) {
+    } else if (typeof usageCount === 'number' && usageCount !== -1 && usageCount > 10) {
       return new Response(
         JSON.stringify({
           error: 'limit_reached',
-          message: "You've used your 3 free AI coach sessions this month. Upgrade to Premium for unlimited access.",
+          message: "You've used your 10 free AI coach sessions this month. Upgrade to Premium for unlimited access.",
         }),
         { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );

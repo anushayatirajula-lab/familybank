@@ -7,18 +7,19 @@ import { useSubscription } from "@/hooks/use-subscription";
 
 const freeFeatures = [
   "Parent account + 1 child account",
-  "Basic chore assignment & approval",
+  "Up to 5 active chores per child",
   "Token wallet with 5 jars (Books, Shopping, Charity, Wishlist, Savings)",
   "Manual allowance (parent-triggered)",
   "Wishlist creation (up to 3 items)",
   "Basic transaction history (last 30 days)",
-  "3 AI coach sessions per month",
+  "10 AI coach sessions per month",
   "PWA install on mobile/desktop",
 ];
 
 const premiumFeatures = [
   "Everything in Free, plus:",
   "Up to 5 child accounts",
+  "Unlimited chores per child",
   "Automated weekly allowances (cron-powered)",
   "Recurring chores (auto-regenerated weekly)",
   "Unlimited AI coach sessions (lesson, quiz, chat)",

@@ -2,7 +2,8 @@ export const TIER_LIMITS = {
   free: {
     maxChildren: 1,
     maxWishlistItems: 3,
-    aiCoachSessionsPerMonth: 3,
+    maxActiveChoresPerChild: 5,
+    aiCoachSessionsPerMonth: 10,
     transactionHistoryDays: 30,
     automatedAllowances: false,
     recurringChores: false,
@@ -15,6 +16,7 @@ export const TIER_LIMITS = {
   premium: {
     maxChildren: 5,
     maxWishlistItems: Infinity,
+    maxActiveChoresPerChild: Infinity,
     aiCoachSessionsPerMonth: Infinity,
     transactionHistoryDays: Infinity,
     automatedAllowances: true,
