@@ -48,11 +48,14 @@ const DAYS_OF_WEEK = [
 
 export const AllowanceManager = ({ childId, childName }: AllowanceManagerProps) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { isPremium } = useSubscription();
   const [allowances, setAllowances] = useState<Allowance[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
   const [dayOfWeek, setDayOfWeek] = useState("1");
+
 
   const formatMoney = (amount: number) => {
     return (amount / 10).toFixed(2);
