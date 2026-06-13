@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Settings2 } from "lucide-react";
+import { Loader2, Settings2, Lock, Crown } from "lucide-react";
+import { useSubscription } from "@/hooks/use-subscription";
 import {
   Dialog,
   DialogContent,
@@ -24,6 +26,8 @@ interface JarPercentageEditorProps {
 
 export const JarPercentageEditor = ({ childId, childName, onUpdate }: JarPercentageEditorProps) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const subscription = useSubscription();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -130,6 +134,15 @@ export const JarPercentageEditor = ({ childId, childName, onUpdate }: JarPercent
     };
     return colors[jarType] || "bg-primary";
   };
+
+  if (!subscription.isPremium) {
+    return (
+      <Button variant="outline" size="sm" onClick={() => navigate("/pricing")} title="Premium feature">
+        <Lock className="mr-2 h-4 w-4" />
+        Edit Jar Split
+      </Button>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
