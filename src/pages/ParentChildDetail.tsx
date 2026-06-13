@@ -537,13 +537,21 @@ const ParentChildDetail = () => {
                           </td>
                           <td className="py-3 text-center">
                             {chore.is_recurring ? (
-                              <Badge variant="secondary" className="gap-1">
-                                <RefreshCw className="h-3 w-3" />
-                                {chore.recurrence_type === "daily" ? "Daily" : "Weekly"}
-                              </Badge>
+                              <div className="flex flex-wrap items-center justify-center gap-1">
+                                <Badge variant="secondary" className="gap-1">
+                                  <RefreshCw className="h-3 w-3" />
+                                  {chore.recurrence_type === "daily" ? "Daily" : "Weekly"}
+                                </Badge>
+                                {!subscription.isPremium && (
+                                  <Badge variant="outline" className="border-amber-500/50 text-amber-700 dark:text-amber-400 text-[10px]">
+                                    Paused — upgrade to resume
+                                  </Badge>
+                                )}
+                              </div>
                             ) : (
                               <span className="text-sm text-muted-foreground">One-time</span>
                             )}
+
                           </td>
                           <td className="py-3 text-right">
                             <div className="flex items-center justify-end gap-2">
