@@ -44,3 +44,6 @@ verify_jwt = false
 
 [functions.parent-reset-child-password]
 verify_jwt = false
+
+[functions.send-trial-reminder]
+verify_jwt = false
