@@ -384,6 +384,7 @@ export type Database = {
           subscription_id: string | null
           subscription_status: string | null
           tier: string
+          trial_reminder_sent_at: string | null
           updated_at: string | null
           user_id: string
         }
@@ -397,6 +398,7 @@ export type Database = {
           subscription_id?: string | null
           subscription_status?: string | null
           tier?: string
+          trial_reminder_sent_at?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -410,6 +412,7 @@ export type Database = {
           subscription_id?: string | null
           subscription_status?: string | null
           tier?: string
+          trial_reminder_sent_at?: string | null
           updated_at?: string | null
           user_id?: string
         }
