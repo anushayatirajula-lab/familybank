@@ -336,7 +336,7 @@ const ParentChildDetail = () => {
               Back to Dashboard
             </Button>
             <div className="flex gap-2">
-              {subscription.isPremium && (
+              {(
                 <Dialog open={resetPasswordOpen} onOpenChange={(open) => { setResetPasswordOpen(open); if (!open) setNewPassword(""); }}>
                   <DialogTrigger asChild>
                     <Button variant="outline" size="sm">
