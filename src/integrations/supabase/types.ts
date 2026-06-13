@@ -375,32 +375,41 @@ export type Database = {
       }
       subscription_data: {
         Row: {
+          ai_coach_usage_count: number
+          ai_coach_usage_month: string | null
           created_at: string | null
           current_period_end: string | null
           id: string
           stripe_customer_id: string | null
           subscription_id: string | null
           subscription_status: string | null
+          tier: string
           updated_at: string | null
           user_id: string
         }
         Insert: {
+          ai_coach_usage_count?: number
+          ai_coach_usage_month?: string | null
           created_at?: string | null
           current_period_end?: string | null
           id?: string
           stripe_customer_id?: string | null
           subscription_id?: string | null
           subscription_status?: string | null
+          tier?: string
           updated_at?: string | null
           user_id: string
         }
         Update: {
+          ai_coach_usage_count?: number
+          ai_coach_usage_month?: string | null
           created_at?: string | null
           current_period_end?: string | null
           id?: string
           stripe_customer_id?: string | null
           subscription_id?: string | null
           subscription_status?: string | null
+          tier?: string
           updated_at?: string | null
           user_id?: string
         }
@@ -554,6 +563,10 @@ export type Database = {
         Returns: boolean
       }
       fb_approve_chore: { Args: { p_chore: string }; Returns: boolean }
+      fb_increment_ai_coach_usage: {
+        Args: { _user_id: string }
+        Returns: number
+      }
       fb_spend_wishlist: { Args: { p_item_id: string }; Returns: boolean }
       fb_split_into_jars: {
         Args: {
@@ -575,6 +588,7 @@ export type Database = {
         Returns: boolean
       }
       generate_family_code: { Args: never; Returns: string }
+      get_user_tier: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["user_role"]
