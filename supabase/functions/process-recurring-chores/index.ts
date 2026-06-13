@@ -80,9 +80,17 @@ Deno.serve(async (req) => {
 
     console.log(`Processing recurring chores for day: ${dayOfWeek}, parentId: ${parentId || "ALL (cron)"}`);
 
-    // If called by a parent, only get their children's IDs
+    // If called by a parent, gate on premium tier and only get their children
     let childIds: string[] | null = null;
     if (parentId) {
+      const { data: tierData } = await supabase.rpc('get_user_tier', { _user_id: parentId });
+      if (tierData !== 'premium') {
+        return new Response(
+          JSON.stringify({ error: "Recurring chores require a Premium subscription." }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       const { data: children, error: childError } = await supabase
         .from("children")
         .select("id")
@@ -97,6 +105,24 @@ Deno.serve(async (req) => {
           { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
         );
       }
+    } else {
+      // Cron path: only include children whose parent is premium
+      const { data: premiumChildren } = await supabase
+        .from("children")
+        .select("id, parent_id");
+      if (premiumChildren && premiumChildren.length > 0) {
+        const parentIds = Array.from(new Set(premiumChildren.map((c) => c.parent_id)));
+        const tierChecks = await Promise.all(
+          parentIds.map(async (pid) => {
+            const { data } = await supabase.rpc('get_user_tier', { _user_id: pid });
+            return { pid, tier: data };
+          })
+        );
+        const premiumParentIds = new Set(tierChecks.filter((t) => t.tier === 'premium').map((t) => t.pid));
+        childIds = premiumChildren.filter((c) => premiumParentIds.has(c.parent_id)).map((c) => c.id);
+      } else {
+        childIds = [];
+      }
     }
 
     // Build query for recurring chore templates
@@ -107,8 +133,13 @@ Deno.serve(async (req) => {
       .eq("status", "APPROVED")
       .is("parent_chore_id", null);
 
-    // Scope to parent's children when triggered by a parent
     if (childIds) {
+      if (childIds.length === 0) {
+        return new Response(
+          JSON.stringify({ success: true, message: "No premium-tier children — nothing to process." }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+        );
+      }
       query = query.in("child_id", childIds);
     }
 

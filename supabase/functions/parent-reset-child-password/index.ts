@@ -75,6 +75,16 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Gate behind Premium tier
+    const { data: tier } = await supabaseAdmin.rpc('get_user_tier', { _user_id: caller.id });
+    if (tier !== 'premium') {
+      return new Response(
+        JSON.stringify({ error: 'Child password reset is a Premium feature. Please upgrade to continue.' }),
+        { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+
     if (!child.user_id) {
       return new Response(JSON.stringify({ error: 'Child does not have a login account yet' }), {
         status: 400,

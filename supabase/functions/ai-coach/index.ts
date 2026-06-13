@@ -105,6 +105,24 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
+    // Enforce free-tier AI coach limit (counts both parent and child usage against the parent)
+    const parentIdForLimit = child.parent_id;
+    const { data: usageCount, error: usageError } = await supabase.rpc(
+      'fb_increment_ai_coach_usage',
+      { _user_id: parentIdForLimit }
+    );
+    if (usageError) {
+      console.error('AI coach usage RPC failed:', usageError);
+    } else if (typeof usageCount === 'number' && usageCount !== -1 && usageCount > 3) {
+      return new Response(
+        JSON.stringify({
+          error: 'limit_reached',
+          message: "You've used your 3 free AI coach sessions this month. Upgrade to Premium for unlimited access.",
+        }),
+        { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Fetch child's financial context for personalized coaching
     const [balancesRes, wishlistRes, transactionsRes] = await Promise.all([
       supabase.from('balances').select('jar_type, amount').eq('child_id', childId),

@@ -120,6 +120,14 @@ serve(async (req) => {
           continue;
         }
 
+        // Skip free-tier parents — automated allowances are Premium only
+        const { data: tierData } = await supabase.rpc('get_user_tier', { _user_id: child.parent_id });
+        if (tierData !== 'premium') {
+          console.log(`Skipping allowance ${allowance.id}: parent is on free tier`);
+          continue;
+        }
+
+
         // Distribute tokens using the existing function
         const { error: distributeError } = await supabase.rpc("fb_split_into_jars", {
           p_child: allowance.child_id,
