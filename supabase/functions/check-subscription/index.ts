@@ -76,9 +76,16 @@ serve(async (req) => {
     // Get subscription data from protected table (only service role can access)
     const { data: subscriptionData } = await supabaseClient
       .from('subscription_data')
-      .select('stripe_customer_id, subscription_id, subscription_status, current_period_end')
+      .select('stripe_customer_id, subscription_id, subscription_status, current_period_end, tier, ai_coach_usage_count, ai_coach_usage_month')
       .eq('user_id', userId)
       .single();
+
+    const AI_COACH_FREE_LIMIT = 3;
+    const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+    const aiCoachUsageCount =
+      subscriptionData?.ai_coach_usage_month === currentMonth
+        ? subscriptionData?.ai_coach_usage_count ?? 0
+        : 0;
 
     logStep("Data retrieved", { profile, subscriptionData });
 
@@ -127,7 +134,10 @@ serve(async (req) => {
         subscribed: false,
         on_trial: isTrialActive,
         trial_ends_at: trialEnds?.toISOString(),
-        subscription_status: isTrialActive ? 'trialing' : 'expired'
+        subscription_status: isTrialActive ? 'trialing' : 'free',
+        tier: isTrialActive ? 'premium' : 'free',
+        ai_coach_usage_count: aiCoachUsageCount,
+        ai_coach_limit: AI_COACH_FREE_LIMIT,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -174,7 +184,10 @@ serve(async (req) => {
         subscribed: false,
         on_trial: isTrialActive,
         trial_ends_at: trialEnds?.toISOString(),
-        subscription_status: isTrialActive ? 'trialing' : 'expired'
+        subscription_status: isTrialActive ? 'trialing' : 'free',
+        tier: isTrialActive ? 'premium' : 'free',
+        ai_coach_usage_count: aiCoachUsageCount,
+        ai_coach_limit: AI_COACH_FREE_LIMIT,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -200,6 +213,7 @@ serve(async (req) => {
         subscription_id: subscription.id,
         subscription_status: subscription.status,
         current_period_end: subscriptionEnd.toISOString(),
+        tier: isActive ? 'premium' : 'free',
       }, { onConflict: 'user_id' });
 
     return new Response(JSON.stringify({
@@ -207,6 +221,9 @@ serve(async (req) => {
       on_trial: isOnTrial,
       trial_ends_at: isOnTrial ? subscriptionEnd.toISOString() : null,
       subscription_status: subscription.status,
+      tier: isActive ? 'premium' : 'free',
+      ai_coach_usage_count: aiCoachUsageCount,
+      ai_coach_limit: AI_COACH_FREE_LIMIT,
       current_period_end: subscriptionEnd.toISOString()
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

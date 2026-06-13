@@ -103,6 +103,15 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
+    // Gate behind Premium tier
+    const { data: tier } = await supabase.rpc('get_user_tier', { _user_id: user.id });
+    if (tier !== 'premium') {
+      return new Response(
+        JSON.stringify({ error: 'Emailing credentials is a Premium feature. Please upgrade to continue.' }),
+        { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     console.log('Sending child credentials email (email address redacted for security)');
 
     // Escape all user-controlled variables for HTML

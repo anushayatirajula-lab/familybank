@@ -4,8 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { LogOut, Plus, CheckCircle2, Clock, ArrowLeft, CreditCard, RefreshCw, Trash2, DollarSign } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { LogOut, Plus, CheckCircle2, Clock, CreditCard, RefreshCw, Trash2, DollarSign, Crown, Lock } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { useSubscription } from "@/hooks/use-subscription";
@@ -17,15 +17,8 @@ interface Child {
   name: string;
   age: number | null;
   user_id: string | null;
-  balances?: Array<{
-    jar_type: string;
-    amount: number;
-  }>;
-  chores?: Array<{
-    id: string;
-    title: string;
-    status: string;
-  }>;
+  balances?: Array<{ jar_type: string; amount: number }>;
+  chores?: Array<{ id: string; title: string; status: string }>;
 }
 
 const ParentDashboard = () => {
@@ -48,15 +41,12 @@ const ParentDashboard = () => {
       navigate("/auth/login");
       return;
     }
-
-    // Check if user has PARENT role
     const { data: roleData } = await supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", session.user.id)
       .maybeSingle();
 
-    // If user has CHILD role, redirect to child login
     if (roleData?.role === "CHILD") {
       toast({
         variant: "destructive",
@@ -64,10 +54,7 @@ const ParentDashboard = () => {
         description: "Please use the child login to access your dashboard.",
       });
       navigate("/child/login");
-      return;
     }
-
-    // If no role found, assume parent (for backward compatibility with existing users)
   };
 
   const fetchDashboardData = async () => {
@@ -75,41 +62,27 @@ const ParentDashboard = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Get profile
       const { data: profile } = await supabase
         .from("profiles_public")
         .select("full_name")
         .eq("id", user.id)
         .single();
+      if (profile) setParentName(profile.full_name || "Parent");
 
-      if (profile) {
-        setParentName(profile.full_name || "Parent");
-      }
-
-      // Get children with balances and chores
       const { data: childrenData } = await supabase
         .from("children")
-        .select(`
-          *,
-          balances(*),
-          chores(id, title, status)
-        `)
+        .select(`*, balances(*), chores(id, title, status)`)
         .eq("parent_id", user.id);
 
       if (childrenData) {
-        // Sort children alphabetically by name
-        const sortedChildren = childrenData.sort((a, b) => 
-          a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+        const sorted = childrenData.sort((a, b) =>
+          a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
         );
-        setChildren(sortedChildren);
+        setChildren(sorted);
       }
     } catch (error) {
       console.error("Error fetching dashboard:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load dashboard data.",
-      });
+      toast({ variant: "destructive", title: "Error", description: "Failed to load dashboard data." });
     } finally {
       setLoading(false);
     }
@@ -118,29 +91,10 @@ const ParentDashboard = () => {
   const subscribeToUpdates = () => {
     const channel = supabase
       .channel("dashboard-changes")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "balances",
-        },
-        () => fetchDashboardData()
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "chores",
-        },
-        () => fetchDashboardData()
-      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "balances" }, () => fetchDashboardData())
+      .on("postgres_changes", { event: "*", schema: "public", table: "chores" }, () => fetchDashboardData())
       .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   };
 
   const handleLogout = async () => {
@@ -149,75 +103,47 @@ const ParentDashboard = () => {
   };
 
   const handleGenerateRecurringChores = async () => {
+    if (!subscription.isPremium) {
+      toast({
+        variant: "destructive",
+        title: "Premium feature",
+        description: "Recurring chores require a Premium subscription.",
+      });
+      navigate("/pricing");
+      return;
+    }
     try {
-      toast({
-        title: "Processing...",
-        description: "Generating recurring chores for today.",
-      });
-
+      toast({ title: "Processing...", description: "Generating recurring chores for today." });
       const { data, error } = await supabase.functions.invoke("process-recurring-chores");
-
       if (error) throw error;
-
-      toast({
-        title: "Success!",
-        description: data?.message || "Recurring chores generated successfully.",
-      });
-
-      // Refresh dashboard data
+      toast({ title: "Success!", description: data?.message || "Recurring chores generated successfully." });
       fetchDashboardData();
     } catch (error) {
       console.error("Error generating recurring chores:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to generate recurring chores.",
-      });
+      toast({ variant: "destructive", title: "Error", description: "Failed to generate recurring chores." });
     }
   };
 
   const handleCleanupOldChores = async () => {
     try {
-      toast({
-        title: "Processing...",
-        description: "Cleaning up old approved chores.",
-      });
-
+      toast({ title: "Processing...", description: "Cleaning up old approved chores." });
       const { data, error } = await supabase.functions.invoke("cleanup-old-chores");
-
       if (error) throw error;
-
-      toast({
-        title: "Success!",
-        description: data?.message || "Old chores cleaned up successfully.",
-      });
-
-      // Refresh dashboard data
+      toast({ title: "Success!", description: data?.message || "Old chores cleaned up successfully." });
       fetchDashboardData();
     } catch (error) {
       console.error("Error cleaning up old chores:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to cleanup old chores.",
-      });
+      toast({ variant: "destructive", title: "Error", description: "Failed to cleanup old chores." });
     }
   };
 
-  const getTotalBalance = (child: Child) => {
-    if (!child.balances) return 0;
-    return child.balances.reduce((sum, b) => sum + Number(b.amount), 0);
-  };
+  const getTotalBalance = (child: Child) =>
+    child.balances ? child.balances.reduce((sum, b) => sum + Number(b.amount), 0) : 0;
+  const formatMoney = (amount: number) => (amount / 10).toFixed(2);
+  const getPendingChores = (child: Child) =>
+    child.chores ? child.chores.filter((c) => c.status === "SUBMITTED").length : 0;
 
-  const formatMoney = (amount: number) => {
-    return (amount / 10).toFixed(2);
-  };
-
-  const getPendingChores = (child: Child) => {
-    if (!child.chores) return 0;
-    return child.chores.filter((c) => c.status === "SUBMITTED").length;
-  };
-
+  const childLimitReached = !subscription.isPremium && children.length >= subscription.limits.maxChildren;
 
   if (loading) {
     return (
@@ -229,18 +155,31 @@ const ParentDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="border-b bg-gradient-card">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">FamilyBank</h1>
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              FamilyBank
+              {subscription.isPremium ? (
+                <Badge className="bg-primary text-primary-foreground">
+                  <Crown className="h-3 w-3 mr-1" /> Premium
+                </Badge>
+              ) : (
+                <Badge variant="outline">Free</Badge>
+              )}
+            </h1>
             <p className="text-sm text-muted-foreground">Welcome back, {parentName}</p>
           </div>
           <div className="flex gap-2">
-            {subscription.subscribed && (
+            {subscription.isPremium ? (
               <Button variant="ghost" onClick={subscription.openCustomerPortal}>
                 <CreditCard className="mr-2 h-4 w-4" />
-                Manage Subscription
+                Manage
+              </Button>
+            ) : (
+              <Button variant="ghost" onClick={() => navigate("/pricing")}>
+                <Crown className="mr-2 h-4 w-4" />
+                Upgrade
               </Button>
             )}
             <Button variant="outline" onClick={handleLogout}>
@@ -252,67 +191,61 @@ const ParentDashboard = () => {
       </header>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Subscription Banner */}
-        <SubscriptionBanner 
+        <SubscriptionBanner
+          tier={subscription.tier}
+          onTrial={subscription.on_trial}
           daysRemaining={subscription.getTrialDaysRemaining()}
           onSubscribe={subscription.createCheckout}
-          isExpired={!subscription.isAccessAllowed() && !subscription.loading}
         />
 
-        {/* Block access if trial expired and not subscribed */}
-        {!subscription.isAccessAllowed() && !subscription.loading && (
-          <Card className="text-center p-12">
-            <CardHeader>
-              <CardTitle className="text-3xl">Trial Expired</CardTitle>
-              <CardDescription className="text-lg">
-                Your 7-day free trial has ended. Subscribe to continue managing your family's finances.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button onClick={subscription.createCheckout} size="lg" className="mt-4">
-                <CreditCard className="mr-2 h-5 w-5" />
-                Subscribe Now - $4.99/month
+        {/* Quick Actions */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-8">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span>
+                <Button
+                  onClick={() => navigate("/parent/children/new")}
+                  disabled={childLimitReached}
+                  className="w-full h-auto py-2.5 px-2 flex items-center justify-center gap-1.5"
+                >
+                  {childLimitReached ? <Lock className="h-4 w-4 shrink-0" /> : <Plus className="h-4 w-4 shrink-0" />}
+                  <span className="text-xs sm:text-sm truncate">Add Child</span>
+                </Button>
+              </span>
+            </TooltipTrigger>
+            {childLimitReached && (
+              <TooltipContent>
+                <p>Free plan supports 1 child. Upgrade to Premium for up to 5.</p>
+              </TooltipContent>
+            )}
+          </Tooltip>
+          <Button onClick={() => navigate("/parent/chores/new")} variant="outline" className="w-full h-auto py-2.5 px-2 flex items-center justify-center gap-1.5">
+            <Plus className="h-4 w-4 shrink-0" />
+            <span className="text-xs sm:text-sm truncate">Create Chore</span>
+          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button onClick={handleGenerateRecurringChores} variant="outline" className="w-full h-auto py-2.5 px-2 flex items-center justify-center gap-1.5">
+                {subscription.isPremium ? <RefreshCw className="h-4 w-4 shrink-0" /> : <Lock className="h-4 w-4 shrink-0" />}
+                <span className="text-xs sm:text-sm truncate">Recurring</span>
               </Button>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Show dashboard only if access is allowed */}
-        {subscription.isAccessAllowed() && (
-          <>
-            {/* Quick Actions */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-8">
-              <Button onClick={() => navigate("/parent/children/new")} className="w-full h-auto py-2.5 px-2 flex items-center justify-center gap-1.5">
-                <Plus className="h-4 w-4 shrink-0" />
-                <span className="text-xs sm:text-sm truncate">Add Child</span>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{subscription.isPremium ? "Generate today's chores from recurring templates" : "Premium feature"}</p>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button onClick={handleCleanupOldChores} variant="outline" className="w-full h-auto py-2.5 px-2 flex items-center justify-center gap-1.5">
+                <Trash2 className="h-4 w-4 shrink-0" />
+                <span className="text-xs sm:text-sm truncate">Cleanup</span>
               </Button>
-              <Button onClick={() => navigate("/parent/chores/new")} variant="outline" className="w-full h-auto py-2.5 px-2 flex items-center justify-center gap-1.5">
-                <Plus className="h-4 w-4 shrink-0" />
-                <span className="text-xs sm:text-sm truncate">Create Chore</span>
-              </Button>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button onClick={handleGenerateRecurringChores} variant="outline" className="w-full h-auto py-2.5 px-2 flex items-center justify-center gap-1.5">
-                    <RefreshCw className="h-4 w-4 shrink-0" />
-                    <span className="text-xs sm:text-sm truncate">Recurring</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Generate today's chores from recurring templates</p>
-                </TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button onClick={handleCleanupOldChores} variant="outline" className="w-full h-auto py-2.5 px-2 flex items-center justify-center gap-1.5">
-                    <Trash2 className="h-4 w-4 shrink-0" />
-                    <span className="text-xs sm:text-sm truncate">Cleanup</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Delete approved chores older than 30 days</p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Delete approved chores older than 30 days</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
 
         {/* Children Overview */}
         {children.length === 0 ? (
@@ -345,14 +278,11 @@ const ParentDashboard = () => {
                     </Avatar>
                     <div>
                       <CardTitle>{child.name}</CardTitle>
-                      {child.age && (
-                        <CardDescription>Age {child.age}</CardDescription>
-                      )}
+                      {child.age && <CardDescription>Age {child.age}</CardDescription>}
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Total Balance */}
                   <div className="flex items-center justify-between p-3 bg-gradient-to-r from-green-50 to-emerald-100 dark:from-green-950 dark:to-emerald-900 rounded-lg">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center">
@@ -360,12 +290,9 @@ const ParentDashboard = () => {
                       </div>
                       <span className="font-semibold">Total Balance</span>
                     </div>
-                    <span className="text-2xl font-bold">
-                      ${formatMoney(getTotalBalance(child))}
-                    </span>
+                    <span className="text-2xl font-bold">${formatMoney(getTotalBalance(child))}</span>
                   </div>
 
-                  {/* Status Indicators */}
                   <div className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <Clock className="w-4 h-4" />
@@ -376,17 +303,14 @@ const ParentDashboard = () => {
                       <span>{child.chores?.filter((c) => c.status === "APPROVED").length || 0}</span>
                     </div>
                   </div>
-
                 </CardContent>
               </Card>
             ))}
           </div>
         )}
-          </>
-        )}
       </div>
 
-      <NotificationPrompt />
+      {subscription.isPremium && <NotificationPrompt />}
     </div>
   );
 };

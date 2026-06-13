@@ -20,6 +20,7 @@ import UpdatePassword from "./pages/UpdatePassword";
 import ChildWishlist from "./pages/ChildWishlist";
 import DeveloperDocs from "./pages/DeveloperDocs";
 import Install from "./pages/Install";
+import Pricing from "./pages/Pricing";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +49,7 @@ const App = () => (
           <Route path="/child-wishlist" element={<ChildWishlist />} />
           <Route path="/developer-docs" element={<DeveloperDocs />} />
           <Route path="/install" element={<Install />} />
+          <Route path="/pricing" element={<Pricing />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -91,11 +91,37 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Determine the parent user_id this notification is associated with (the recipient is either the parent or their child).
+    // If the recipient is a child, look up the parent.
+    let parentIdForTierCheck = userId;
+    const { data: childRow } = await supabaseAdmin
+      .from("children")
+      .select("parent_id")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (childRow?.parent_id) {
+      parentIdForTierCheck = childRow.parent_id;
+    }
+
+    // Push notifications are Premium only. Save to notifications table but skip web push for free tier.
+    const { data: tier } = await supabaseAdmin.rpc('get_user_tier', { _user_id: parentIdForTierCheck });
+    const isPremium = tier === 'premium';
+
+    if (!isPremium) {
+      await supabaseAdmin.from("notifications").insert({ user_id: userId, title, body, data: data || {} });
+      logStep("Skipping web push (free tier); saved in-app notification only");
+      return new Response(
+        JSON.stringify({ message: "Free tier: notification saved without push" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      );
+    }
+
     // Get user's push subscriptions
     const { data: subscriptions, error: subsError } = await supabaseAdmin
       .from("push_subscriptions")
       .select("*")
       .eq("user_id", userId);
+
 
     if (subsError) {
       logStep("Error fetching subscriptions", subsError);
