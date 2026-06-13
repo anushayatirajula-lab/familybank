@@ -80,7 +80,7 @@ serve(async (req) => {
       .eq('user_id', userId)
       .single();
 
-    const AI_COACH_FREE_LIMIT = 3;
+    const AI_COACH_FREE_LIMIT = 10;
     const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
     const aiCoachUsageCount =
       subscriptionData?.ai_coach_usage_month === currentMonth

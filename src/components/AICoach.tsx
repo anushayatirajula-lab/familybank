@@ -122,7 +122,7 @@ const AICoach = ({ childAge, childId }: AICoachProps) => {
             <CardTitle className="text-base md:text-xl truncate">FamilyBank Coach</CardTitle>
             {!subscription.isPremium && (
               <Badge variant="outline" className="ml-1 text-xs">
-                {subscription.aiCoachRemaining}/3 left
+                {subscription.aiCoachRemaining}/10 left
               </Badge>
             )}
           </div>
@@ -193,7 +193,7 @@ const AICoach = ({ childAge, childId }: AICoachProps) => {
         {limitReached && (
           <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-center flex-shrink-0">
             <Lock className="h-5 w-5 text-primary mx-auto mb-1" />
-            <p className="text-sm font-medium mb-2">You've used all 3 free sessions this month</p>
+            <p className="text-sm font-medium mb-2">You've used all 10 free sessions this month</p>
             <Button size="sm" onClick={() => navigate("/pricing")}>
               <Crown className="mr-2 h-3.5 w-3.5" />
               Upgrade for unlimited
