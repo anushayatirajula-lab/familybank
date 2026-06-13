@@ -1,11 +1,14 @@
 import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Sparkles, Send, BookOpen, Trophy } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Sparkles, Send, BookOpen, Trophy, Lock, Crown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useSubscription } from "@/hooks/use-subscription";
 
 interface Message {
   role: "user" | "assistant";
@@ -18,12 +21,16 @@ interface AICoachProps {
 }
 
 const AICoach = ({ childAge, childId }: AICoachProps) => {
+  const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<"chat" | "lesson" | "quiz">("chat");
   const scrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const subscription = useSubscription();
+  const limitReached = !subscription.isPremium && subscription.aiCoachRemaining <= 0;
+
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -55,6 +62,16 @@ const AICoach = ({ childAge, childId }: AICoachProps) => {
 
       if (error) throw error;
 
+      if (data.error === 'limit_reached') {
+        toast({
+          variant: "destructive",
+          title: "Monthly limit reached",
+          description: data.message || "Upgrade to Premium for unlimited AI coach sessions.",
+        });
+        await subscription.checkSubscription();
+        return;
+      }
+
       if (data.error) {
         throw new Error(data.error);
       }
@@ -66,6 +83,7 @@ const AICoach = ({ childAge, childId }: AICoachProps) => {
           { role: "assistant", content: assistantMessage },
         ]);
       }
+      await subscription.checkSubscription();
     } catch (error: any) {
       console.error("AI Coach error:", error);
       toast({
