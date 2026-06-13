@@ -9,8 +9,8 @@ export const TIER_LIMITS = {
     recurringChores: false,
     customJarPercentages: false,
     pushNotifications: false,
-    childPasswordReset: false,
-    emailCredentials: false,
+    childPasswordReset: true,
+    emailCredentials: true,
     spendingAnalytics: false,
   },
   premium: {

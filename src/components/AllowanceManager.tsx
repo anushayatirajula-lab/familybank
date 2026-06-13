@@ -1,12 +1,16 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useSubscription } from "@/hooks/use-subscription";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
-import { Pencil, Trash2, Calendar } from "lucide-react";
+import { Pencil, Trash2, Calendar, PauseCircle, Sparkles } from "lucide-react";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,11 +48,14 @@ const DAYS_OF_WEEK = [
 
 export const AllowanceManager = ({ childId, childName }: AllowanceManagerProps) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { isPremium } = useSubscription();
   const [allowances, setAllowances] = useState<Allowance[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
   const [dayOfWeek, setDayOfWeek] = useState("1");
+
 
   const formatMoney = (amount: number) => {
     return (amount / 10).toFixed(2);
@@ -209,7 +216,25 @@ export const AllowanceManager = ({ childId, childName }: AllowanceManagerProps) 
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
+        {!isPremium && allowances.length > 0 && (
+          <Alert className="border-amber-500/40 bg-amber-50 dark:bg-amber-950/40">
+            <PauseCircle className="h-4 w-4 text-amber-600" />
+            <AlertTitle className="text-amber-900 dark:text-amber-100">
+              Automated allowances are paused
+            </AlertTitle>
+            <AlertDescription className="flex items-center justify-between gap-3 text-amber-900 dark:text-amber-100">
+              <span>
+                Your saved schedule won't run on the Free plan. Upgrade to resume automatic weekly payouts — your settings are kept.
+              </span>
+              <Button size="sm" onClick={() => navigate("/pricing")} className="shrink-0">
+                <Sparkles className="mr-2 h-3.5 w-3.5" />
+                Upgrade to resume
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
         {/* Form */}
+
         <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">

@@ -336,7 +336,7 @@ const ParentChildDetail = () => {
               Back to Dashboard
             </Button>
             <div className="flex gap-2">
-              {subscription.isPremium && (
+              {(
                 <Dialog open={resetPasswordOpen} onOpenChange={(open) => { setResetPasswordOpen(open); if (!open) setNewPassword(""); }}>
                   <DialogTrigger asChild>
                     <Button variant="outline" size="sm">
@@ -537,13 +537,21 @@ const ParentChildDetail = () => {
                           </td>
                           <td className="py-3 text-center">
                             {chore.is_recurring ? (
-                              <Badge variant="secondary" className="gap-1">
-                                <RefreshCw className="h-3 w-3" />
-                                {chore.recurrence_type === "daily" ? "Daily" : "Weekly"}
-                              </Badge>
+                              <div className="flex flex-wrap items-center justify-center gap-1">
+                                <Badge variant="secondary" className="gap-1">
+                                  <RefreshCw className="h-3 w-3" />
+                                  {chore.recurrence_type === "daily" ? "Daily" : "Weekly"}
+                                </Badge>
+                                {!subscription.isPremium && (
+                                  <Badge variant="outline" className="border-amber-500/50 text-amber-700 dark:text-amber-400 text-[10px]">
+                                    Paused — upgrade to resume
+                                  </Badge>
+                                )}
+                              </div>
                             ) : (
                               <span className="text-sm text-muted-foreground">One-time</span>
                             )}
+
                           </td>
                           <td className="py-3 text-right">
                             <div className="flex items-center justify-end gap-2">
@@ -648,13 +656,21 @@ const ParentChildDetail = () => {
                       <div className="flex items-center gap-2 mb-3 pl-6">
                         <Badge variant="outline" className="text-xs">{chore.status}</Badge>
                         {chore.is_recurring ? (
-                          <Badge variant="secondary" className="text-xs gap-1">
-                            <RefreshCw className="h-2.5 w-2.5" />
-                            {chore.recurrence_type === "daily" ? "Daily" : "Weekly"}
-                          </Badge>
+                          <>
+                            <Badge variant="secondary" className="text-xs gap-1">
+                              <RefreshCw className="h-2.5 w-2.5" />
+                              {chore.recurrence_type === "daily" ? "Daily" : "Weekly"}
+                            </Badge>
+                            {!subscription.isPremium && (
+                              <Badge variant="outline" className="border-amber-500/50 text-amber-700 dark:text-amber-400 text-[10px]">
+                                Paused
+                              </Badge>
+                            )}
+                          </>
                         ) : (
                           <span className="text-xs text-muted-foreground">One-time</span>
                         )}
+
                       </div>
                       
                       {/* Action buttons - full width grid */}
