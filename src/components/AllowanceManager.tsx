@@ -58,11 +58,11 @@ export const AllowanceManager = ({ childId, childName }: AllowanceManagerProps) 
 
 
   const formatMoney = (amount: number) => {
-    return (amount / 10).toFixed(2);
+    return Number(amount || 0).toFixed(2);
   };
 
-  const dollarsToCents = (dollars: number) => {
-    return dollars * 10;
+  const dollarsToStoredAmount = (dollars: number) => {
+    return Number(dollars.toFixed(2));
   };
 
   useEffect(() => {
@@ -118,7 +118,7 @@ export const AllowanceManager = ({ childId, childName }: AllowanceManagerProps) 
     }
 
     try {
-      const storedAmount = dollarsToCents(parseFloat(amount));
+      const storedAmount = dollarsToStoredAmount(parseFloat(amount));
       const allowanceData = {
         child_id: childId,
         weekly_amount: storedAmount,

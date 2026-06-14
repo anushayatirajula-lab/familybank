@@ -45,8 +45,8 @@ export default function ChildWishlist() {
     return Number(tokens || 0).toFixed(2);
   };
 
-  const moneyToTokens = (money: number) => {
-    return money * 10;
+  const moneyToStoredAmount = (money: number) => {
+    return Number(money.toFixed(2));
   };
 
   useEffect(() => {
@@ -119,14 +119,14 @@ export default function ChildWishlist() {
         return;
       }
 
-      const tokens = moneyToTokens(money);
+      const storedAmount = moneyToStoredAmount(money);
 
       if (editingItem) {
         const { error } = await supabase.rpc("fb_update_wishlist_item", {
           p_item_id: editingItem.id,
           p_title: formData.title,
           p_description: formData.description || "",
-          p_target_amount: tokens,
+          p_target_amount: storedAmount,
         });
 
         if (error) throw error;
@@ -138,7 +138,7 @@ export default function ChildWishlist() {
             child_id: childId,
             title: formData.title,
             description: formData.description,
-            target_amount: tokens,
+            target_amount: storedAmount,
           });
 
         if (error) throw error;

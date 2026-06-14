@@ -57,10 +57,10 @@ export function CashOutDialog({ childId, childName, balances, onCashOutComplete 
   );
 
   const selectedBalance = balances.find((b) => b.jar_type === selectedJar);
-  const maxAmount = selectedBalance ? Number(selectedBalance.amount) / 10 : 0;
+  const maxAmount = selectedBalance ? Number(selectedBalance.amount) : 0;
 
   const formatMoney = (amount: number) => {
-    return (amount / 10).toFixed(2);
+    return Number(amount || 0).toFixed(2);
   };
 
   const handleCashOut = async () => {
@@ -94,8 +94,7 @@ export function CashOutDialog({ childId, childName, balances, onCashOutComplete 
 
     setLoading(true);
     try {
-      // Convert to internal amount (multiply by 10)
-      const internalAmount = Math.round(cashOutAmount * 10);
+      const internalAmount = Number(cashOutAmount.toFixed(2));
 
       // Update the balance - cast jar_type to the expected enum type
       const jarType = selectedJar as "SAVINGS" | "BOOKS" | "SHOPPING" | "CHARITY" | "WISHLIST";

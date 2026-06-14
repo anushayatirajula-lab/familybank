@@ -38,11 +38,11 @@ const EditChore = () => {
   const [selectedDays, setSelectedDays] = useState<number[]>([1]);
 
   const formatStoredAmount = (stored: number) => {
-    return stored / 10;
+    return Number(stored || 0).toFixed(2);
   };
 
-  const dollarsToCents = (dollars: number) => {
-    return dollars * 10;
+  const dollarsToStoredAmount = (dollars: number) => {
+    return Number(dollars.toFixed(2));
   };
 
   useEffect(() => {
@@ -105,7 +105,7 @@ const EditChore = () => {
 
     try {
       const dollars = parseFloat(rewardAmount);
-      const storedAmount = dollarsToCents(dollars);
+      const storedAmount = dollarsToStoredAmount(dollars);
 
       const choreData: any = {
         title,
