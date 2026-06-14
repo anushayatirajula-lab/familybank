@@ -55,6 +55,8 @@ const CreateChore = () => {
     return Math.round(amount * 100) / 100;
   };
 
+  const rewardPreview = Number(rewardAmount);
+
   useEffect(() => {
     fetchChildren();
   }, []);
@@ -207,8 +209,8 @@ const CreateChore = () => {
                   required
                 />
                 <p className="text-sm text-muted-foreground">
-                  {rewardAmount
-                    ? `$${parseDollarAmount(rewardAmount).toFixed(2)} will be automatically split into jars when approved`
+                  {Number.isFinite(rewardPreview) && rewardPreview > 0
+                    ? `$${(Math.round(rewardPreview * 100) / 100).toFixed(2)} will be automatically split into jars when approved`
                     : "This amount will be automatically split into jars when approved"}
                 </p>
               </div>
