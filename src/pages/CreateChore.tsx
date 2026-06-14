@@ -40,9 +40,22 @@ const CreateChore = () => {
   const [recurrenceType, setRecurrenceType] = useState<"daily" | "weekly">("weekly");
   const [selectedDays, setSelectedDays] = useState<number[]>([1]); // Default to Monday
 
-  const dollarsToStoredAmount = (dollars: number) => {
-    return Number(dollars.toFixed(2));
+  const handleRewardAmountChange = (value: string) => {
+    const cleaned = value.replace(/[^0-9.]/g, "");
+    const [whole = "", ...decimalParts] = cleaned.split(".");
+    const decimals = decimalParts.join("").slice(0, 2);
+    setRewardAmount(decimalParts.length > 0 ? `${whole}.${decimals}` : whole);
   };
+
+  const parseDollarAmount = (value: string) => {
+    const amount = Number(value);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      throw new Error("Enter a reward amount greater than $0.00.");
+    }
+    return Math.round(amount * 100) / 100;
+  };
+
+  const rewardPreview = Number(rewardAmount);
 
   useEffect(() => {
     fetchChildren();
@@ -84,8 +97,7 @@ const CreateChore = () => {
     setLoading(true);
 
     try {
-      const dollars = parseFloat(rewardAmount);
-      const storedAmount = dollarsToStoredAmount(dollars);
+      const storedAmount = parseDollarAmount(rewardAmount);
       
       const choreData: any = {
         child_id: selectedChild,
@@ -189,16 +201,17 @@ const CreateChore = () => {
                 <Label htmlFor="reward">Reward Amount ($) *</Label>
                 <Input
                   id="reward"
-                  type="number"
-                  min="0"
-                  step="0.01"
+                  type="text"
+                  inputMode="decimal"
                   value={rewardAmount}
-                  onChange={(e) => setRewardAmount(e.target.value)}
+                  onChange={(e) => handleRewardAmountChange(e.target.value)}
                   placeholder="5.00"
                   required
                 />
                 <p className="text-sm text-muted-foreground">
-                  This amount will be automatically split into jars when approved
+                  {Number.isFinite(rewardPreview) && rewardPreview > 0
+                    ? `$${(Math.round(rewardPreview * 100) / 100).toFixed(2)} will be automatically split into jars when approved`
+                    : "This amount will be automatically split into jars when approved"}
                 </p>
               </div>
 
