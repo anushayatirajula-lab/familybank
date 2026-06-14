@@ -133,7 +133,7 @@ const ChildDashboard = () => {
 
   const subscribeToUpdates = () => {
     const channel = supabase
-      .channel("child-updates")
+      .channel(`child:${childId}`, { config: { private: true } })
       .on(
         "postgres_changes",
         {

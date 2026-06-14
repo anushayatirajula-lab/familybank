@@ -88,9 +88,11 @@ const ParentDashboard = () => {
     }
   };
 
-  const subscribeToUpdates = () => {
+  const subscribeToUpdates = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
     const channel = supabase
-      .channel("dashboard-changes")
+      .channel(`parent:${session.user.id}`, { config: { private: true } })
       .on("postgres_changes", { event: "*", schema: "public", table: "balances" }, () => fetchDashboardData())
       .on("postgres_changes", { event: "*", schema: "public", table: "chores" }, () => fetchDashboardData())
       .subscribe();
