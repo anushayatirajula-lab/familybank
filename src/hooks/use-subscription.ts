@@ -89,9 +89,8 @@ export const useSubscription = () => {
       if (data?.url) window.open(data.url, '_blank');
     } catch (error: any) {
       toast({
-        variant: "destructive",
-        title: "Portal access failed",
-        description: error.message || "Please try again later.",
+        title: "No active subscription to manage yet",
+        description: "Subscribe to a plan first, then you can manage billing here.",
       });
     }
   };
