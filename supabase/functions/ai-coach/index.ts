@@ -124,15 +124,17 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Fetch child's financial context for personalized coaching
-    const [balancesRes, wishlistRes, transactionsRes] = await Promise.all([
+    const [balancesRes, wishlistRes, transactionsRes, allowancesRes] = await Promise.all([
       supabase.from('balances').select('jar_type, amount').eq('child_id', childId),
       supabase.from('wishlist_items').select('title, target_amount, current_amount, approved_by_parent, is_purchased').eq('child_id', childId).eq('is_purchased', false).limit(10),
       supabase.from('transactions').select('jar_type, amount, transaction_type, description, created_at').eq('child_id', childId).order('created_at', { ascending: false }).limit(15),
+      supabase.from('allowances').select('weekly_amount, day_of_week, next_payment_at, is_active').eq('child_id', childId).eq('is_active', true),
     ]);
 
     const balances = balancesRes.data || [];
     const wishlistItems = wishlistRes.data || [];
     const recentTransactions = transactionsRes.data || [];
+    const allowances = allowancesRes.data || [];
 
     // Build context string
     let childContext = "\n\nCHILD'S FINANCIAL CONTEXT (use this to personalize your responses):";
@@ -168,7 +170,21 @@ const handler = async (req: Request): Promise<Response> => {
       childContext += "\n- No recent transactions";
     }
 
-    childContext += "\n\nUse the above context to give specific, personalized advice. Reference their actual numbers, goals, and progress when relevant. Don't just repeat the data back - weave it naturally into your coaching.";
+    const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    if (allowances.length > 0) {
+      const allowanceSummary = allowances.map((a: any) => {
+        const weekly = Number(a.weekly_amount || 0);
+        const monthly = weekly * 4;
+        const day = DAY_NAMES[a.day_of_week] || 'weekly';
+        const next = a.next_payment_at ? new Date(a.next_payment_at).toLocaleDateString() : 'soon';
+        return `$${fmt(weekly)} every ${day} (~$${fmt(monthly)}/month, next payment ${next})`;
+      }).join('; ');
+      childContext += `\n- Allowance: ${allowanceSummary}`;
+    } else {
+      childContext += "\n- No automated allowance set up";
+    }
+
+    childContext += "\n\nUse the above context to give specific, personalized advice. Reference their actual numbers, allowance schedule, goals, and progress when relevant. Don't just repeat the data back - weave it naturally into your coaching.";
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
