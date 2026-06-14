@@ -446,8 +446,10 @@ const ParentChildDetail = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-5xl font-bold mb-6">${formatMoney(getTotalBalance())}</p>
+            <p className="text-5xl font-bold mb-2">${formatMoney(getTotalBalance())}</p>
+            <p className="text-sm text-muted-foreground mb-6">Total wallet balance</p>
             
+            <p className="text-sm font-medium mb-3">Jar split</p>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               {balances.map((balance) => (
                 <div key={balance.jar_type} className="text-center">
