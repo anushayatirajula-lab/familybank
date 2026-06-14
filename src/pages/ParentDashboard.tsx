@@ -173,7 +173,7 @@ const ParentDashboard = () => {
             <p className="text-sm text-muted-foreground">Welcome back, {parentName}</p>
           </div>
           <div className="flex gap-2">
-            {subscription.isPremium ? (
+            {subscription.subscribed ? (
               <Button variant="ghost" onClick={subscription.openCustomerPortal}>
                 <CreditCard className="mr-2 h-4 w-4" />
                 Manage
