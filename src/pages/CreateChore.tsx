@@ -40,8 +40,8 @@ const CreateChore = () => {
   const [recurrenceType, setRecurrenceType] = useState<"daily" | "weekly">("weekly");
   const [selectedDays, setSelectedDays] = useState<number[]>([1]); // Default to Monday
 
-  const dollarsToCents = (dollars: number) => {
-    return dollars * 10;
+  const dollarsToStoredAmount = (dollars: number) => {
+    return Number(dollars.toFixed(2));
   };
 
   useEffect(() => {
@@ -85,7 +85,7 @@ const CreateChore = () => {
 
     try {
       const dollars = parseFloat(rewardAmount);
-      const storedAmount = dollarsToCents(dollars);
+      const storedAmount = dollarsToStoredAmount(dollars);
       
       const choreData: any = {
         child_id: selectedChild,
