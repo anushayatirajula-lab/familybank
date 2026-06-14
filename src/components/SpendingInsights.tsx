@@ -101,7 +101,7 @@ export const SpendingInsights = ({ childId }: SpendingInsightsProps) => {
     }
   };
 
-  const tokensToMoney = (tokens: number) => tokens / 10;
+  const tokensToMoney = (tokens: number) => Number(tokens || 0);
 
   // Calculate daily balance trend
   const getDailyTrend = () => {

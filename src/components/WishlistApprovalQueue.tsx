@@ -51,7 +51,7 @@ export default function WishlistApprovalQueue({ childId }: WishlistApprovalQueue
   const [processing, setProcessing] = useState(false);
 
   const formatMoney = (amount: number) => {
-    return (amount / 10).toFixed(2);
+    return Number(amount || 0).toFixed(2);
   };
 
   useEffect(() => {
