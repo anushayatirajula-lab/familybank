@@ -42,7 +42,7 @@ export default function ChildWishlist() {
   });
 
   const tokensToMoney = (tokens: number) => {
-    return (tokens / 10).toFixed(2);
+    return Number(tokens || 0).toFixed(2);
   };
 
   const moneyToTokens = (money: number) => {
