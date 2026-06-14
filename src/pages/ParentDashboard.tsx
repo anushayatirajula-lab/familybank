@@ -141,7 +141,7 @@ const ParentDashboard = () => {
 
   const getTotalBalance = (child: Child) =>
     child.balances ? child.balances.reduce((sum, b) => sum + Number(b.amount), 0) : 0;
-  const formatMoney = (amount: number) => (amount / 10).toFixed(2);
+  const formatMoney = (amount: number) => Number(amount || 0).toFixed(2);
   const getPendingChores = (child: Child) =>
     child.chores ? child.chores.filter((c) => c.status === "SUBMITTED").length : 0;
 
