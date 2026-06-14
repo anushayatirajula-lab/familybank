@@ -170,7 +170,21 @@ const handler = async (req: Request): Promise<Response> => {
       childContext += "\n- No recent transactions";
     }
 
-    childContext += "\n\nUse the above context to give specific, personalized advice. Reference their actual numbers, goals, and progress when relevant. Don't just repeat the data back - weave it naturally into your coaching.";
+    const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    if (allowances.length > 0) {
+      const allowanceSummary = allowances.map((a: any) => {
+        const weekly = Number(a.weekly_amount || 0);
+        const monthly = weekly * 4;
+        const day = DAY_NAMES[a.day_of_week] || 'weekly';
+        const next = a.next_payment_at ? new Date(a.next_payment_at).toLocaleDateString() : 'soon';
+        return `$${fmt(weekly)} every ${day} (~$${fmt(monthly)}/month, next payment ${next})`;
+      }).join('; ');
+      childContext += `\n- Allowance: ${allowanceSummary}`;
+    } else {
+      childContext += "\n- No automated allowance set up";
+    }
+
+    childContext += "\n\nUse the above context to give specific, personalized advice. Reference their actual numbers, allowance schedule, goals, and progress when relevant. Don't just repeat the data back - weave it naturally into your coaching.";
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
