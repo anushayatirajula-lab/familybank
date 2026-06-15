@@ -570,6 +570,10 @@ export type Database = {
         Args: { _user_id: string }
         Returns: number
       }
+      fb_process_due_allowance: {
+        Args: { p_allowance_id: string }
+        Returns: boolean
+      }
       fb_spend_wishlist: { Args: { p_item_id: string }; Returns: boolean }
       fb_split_into_jars: {
         Args: {
