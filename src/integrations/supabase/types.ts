@@ -590,6 +590,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      fb_verify_cron_secret: { Args: { p_secret: string }; Returns: boolean }
       generate_family_code: { Args: never; Returns: string }
       get_user_tier: { Args: { _user_id: string }; Returns: string }
       has_role: {
