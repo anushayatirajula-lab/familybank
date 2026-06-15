@@ -129,33 +129,12 @@ serve(async (req) => {
         }
 
 
-        // Distribute tokens using the existing function
-        const { error: distributeError } = await supabase.rpc("fb_split_into_jars", {
-          p_child: allowance.child_id,
-          p_amount: allowance.weekly_amount,
-          p_type: "ALLOWANCE",
-          p_reference_id: allowance.id,
+        const { data: allowanceProcessed, error: distributeError } = await supabase.rpc("fb_process_due_allowance", {
+          p_allowance_id: allowance.id,
         });
 
-        if (distributeError) {
-          console.error(`Error distributing tokens for allowance ${allowance.id}:`, distributeError);
-          processedCount.failed++;
-          continue;
-        }
-
-        // Calculate next payment date (7 days from now)
-        const nextPayment = new Date();
-        nextPayment.setDate(nextPayment.getDate() + 7);
-        nextPayment.setHours(0, 0, 0, 0);
-
-        // Update next_payment_at
-        const { error: updateError } = await supabase
-          .from("allowances")
-          .update({ next_payment_at: nextPayment.toISOString() })
-          .eq("id", allowance.id);
-
-        if (updateError) {
-          console.error(`Error updating allowance ${allowance.id}:`, updateError);
+        if (distributeError || allowanceProcessed !== true) {
+          console.error(`Error processing allowance ${allowance.id}:`, distributeError);
           processedCount.failed++;
           continue;
         }
