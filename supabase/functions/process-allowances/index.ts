@@ -55,10 +55,16 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Validate CRON_SECRET to prevent unauthorized invocations
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
+  const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") as string;
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+  // Validate the cron secret against the same vault value used by pg_cron
   const cronSecret = req.headers.get("X-Cron-Secret");
-  const expectedSecret = Deno.env.get("CRON_SECRET");
-  if (!expectedSecret || cronSecret !== expectedSecret) {
+  const { data: isValidCronSecret, error: cronSecretError } = await supabase.rpc("fb_verify_cron_secret", {
+    p_secret: cronSecret,
+  });
+  if (cronSecretError || isValidCronSecret !== true) {
     return new Response(
       JSON.stringify({ error: "Unauthorized" }),
       { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -66,11 +72,6 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") as string;
-    
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
     console.log("Starting allowance processing...");
 
     // Get today's date at midnight
@@ -128,33 +129,12 @@ serve(async (req) => {
         }
 
 
-        // Distribute tokens using the existing function
-        const { error: distributeError } = await supabase.rpc("fb_split_into_jars", {
-          p_child: allowance.child_id,
-          p_amount: allowance.weekly_amount,
-          p_type: "ALLOWANCE",
-          p_reference_id: allowance.id,
+        const { data: allowanceProcessed, error: distributeError } = await supabase.rpc("fb_process_due_allowance", {
+          p_allowance_id: allowance.id,
         });
 
-        if (distributeError) {
-          console.error(`Error distributing tokens for allowance ${allowance.id}:`, distributeError);
-          processedCount.failed++;
-          continue;
-        }
-
-        // Calculate next payment date (7 days from now)
-        const nextPayment = new Date();
-        nextPayment.setDate(nextPayment.getDate() + 7);
-        nextPayment.setHours(0, 0, 0, 0);
-
-        // Update next_payment_at
-        const { error: updateError } = await supabase
-          .from("allowances")
-          .update({ next_payment_at: nextPayment.toISOString() })
-          .eq("id", allowance.id);
-
-        if (updateError) {
-          console.error(`Error updating allowance ${allowance.id}:`, updateError);
+        if (distributeError || allowanceProcessed !== true) {
+          console.error(`Error processing allowance ${allowance.id}:`, distributeError);
           processedCount.failed++;
           continue;
         }

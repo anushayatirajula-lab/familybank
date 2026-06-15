@@ -27,10 +27,13 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const cronSecret = req.headers.get("X-Cron-Secret");
-    const expectedSecret = Deno.env.get("CRON_SECRET");
-    const isCronCall = expectedSecret && cronSecret === expectedSecret;
+    const { data: isValidCronSecret, error: cronSecretError } = await supabase.rpc("fb_verify_cron_secret", {
+      p_secret: cronSecret,
+    });
+    const isCronCall = !cronSecretError && isValidCronSecret === true;
 
     let parentId: string | null = null;
 
@@ -55,8 +58,7 @@ Deno.serve(async (req) => {
         );
       }
 
-      const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-      const { data: roleData } = await supabaseAdmin
+      const { data: roleData } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", user.id)
@@ -72,8 +74,6 @@ Deno.serve(async (req) => {
 
       parentId = user.id;
     }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const today = new Date();
     const dayOfWeek = today.getDay();
