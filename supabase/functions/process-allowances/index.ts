@@ -55,10 +55,16 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Validate CRON_SECRET to prevent unauthorized invocations
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
+  const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") as string;
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+  // Validate the cron secret against the same vault value used by pg_cron
   const cronSecret = req.headers.get("X-Cron-Secret");
-  const expectedSecret = Deno.env.get("CRON_SECRET");
-  if (!expectedSecret || cronSecret !== expectedSecret) {
+  const { data: isValidCronSecret, error: cronSecretError } = await supabase.rpc("fb_verify_cron_secret", {
+    p_secret: cronSecret,
+  });
+  if (cronSecretError || isValidCronSecret !== true) {
     return new Response(
       JSON.stringify({ error: "Unauthorized" }),
       { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -66,11 +72,6 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") as string;
-    
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
     console.log("Starting allowance processing...");
 
     // Get today's date at midnight
