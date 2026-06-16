@@ -170,6 +170,8 @@ Core business logic is encapsulated in PostgreSQL functions to ensure consistent
 |----------|---------|
 | `fb_process_due_allowance(uuid)` | Atomically distributes a due weekly allowance into jars and advances the next payment date |
 | `fb_verify_cron_secret(text)` | Validates the `X-Cron-Secret` header against `vault.decrypted_secrets` |
+| `fb_approve_chore(uuid)` | Atomically approves a submitted chore and splits its reward into jars |
+| `fb_submit_chore(uuid)` | Moves a chore from PENDING to SUBMITTED for parent review |
 | `fb_spend_wishlist(uuid)` | Atomic wishlist purchase: deducts balances, marks the item purchased, and records a transaction |
 | `fb_increment_ai_coach_usage(uuid)` | Tracks monthly AI coach usage for free-tier limits |
 | `get_user_tier(uuid)` | Returns the effective subscription tier (`free`, `premium`, etc.) |
@@ -215,8 +217,8 @@ sequenceDiagram
     Frontend->>Database: UPDATE status → SUBMITTED
     Database-->>Parent: Realtime notification
     Parent->>Frontend: Approves chore
-    Frontend->>EdgeFn: POST /approve-chore
-    EdgeFn->>Database: Transaction: approve + distribute tokens to jars
+    Frontend->>Database: RPC fb_approve_chore
+    Database->>Database: Approve chore + split reward into jars
     Database-->>Child: Realtime balance update
 ```
 
