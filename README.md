@@ -29,7 +29,7 @@ Built a complete production system spanning frontend, backend, database design, 
 |-------|-----------|
 | **Frontend** | React, TypeScript, TailwindCSS, Vite, shadcn/ui |
 | **Backend** | Supabase (PostgreSQL, Auth, Edge Functions, Realtime) |
-| **AI** | LLM API integration (Gemini) with age-adaptive prompt engineering |
+| **AI** | Lovable AI Gateway (Google Gemini 2.5 Flash) with age-adaptive prompts and financial context injection |
 | **Payments** | Stripe (subscriptions, trials, checkout, customer portal) |
 | **Deployment** | PWA with offline support, push notifications, installable on mobile/desktop |
 
@@ -40,12 +40,14 @@ Client (React / TypeScript / PWA)
         ↓
 Supabase Client SDK (Auth + Realtime + REST)
         ↓
-PostgreSQL (RLS-protected tables)
+PostgreSQL (RLS-protected tables + SECURITY DEFINER RPCs)
         ↓
 Edge Functions (Deno serverless)
-    ├── AI Coach (LLM prompt pipelines)
+    ├── AI Coach (LLM prompt pipelines with child financial context)
     ├── Stripe billing (checkout, webhooks, portal)
-    ├── Allowance processing (scheduled cron)
+    ├── Allowance processing (daily cron)
+    ├── Recurring chore generation (daily cron)
+    ├── Trial reminders (daily cron)
     └── Push notifications (Web Push API)
 ```
 
@@ -57,8 +59,9 @@ Edge Functions (Deno serverless)
 - Create and manage multiple child accounts with secure authentication
 - Assign chores with token rewards; review and approve submissions
 - Configure weekly allowances with automated processing
+- Set up recurring chores that regenerate daily or weekly
 - Customize savings jar percentages per child
-- Approve wishlist item purchases
+- Approve wishlist item purchases and cash out non-wishlist jar balances
 - Track transaction history and spending analytics
 - Reset child passwords directly from the dashboard
 - Subscription management via Stripe
@@ -67,7 +70,7 @@ Edge Functions (Deno serverless)
 - View and complete assigned chores
 - Track token balances across multiple jars (Books, Shopping, Charity, Wishlist, Savings)
 - Create and manage wishlist items with savings goals
-- Receive age-appropriate AI-powered financial coaching
+- Receive age-appropriate, context-aware AI-powered financial coaching
 - Real-time balance updates via Supabase Realtime
 
 ---
@@ -81,16 +84,17 @@ The platform includes an LLM-powered financial coaching feature for children, im
 1. Child or parent initiates a coaching session (lesson, quiz, or chat mode)
 2. The edge function verifies authentication and authorization (parent or child ownership)
 3. An age-adaptive system prompt is selected based on the child's age bracket (6–8, 9–11, 12+)
-4. The conversation history and system prompt are sent to the LLM (Google Gemini 2.5 Flash)
-5. The response is returned to the client in real-time
+4. The child's live financial context (jar balances, wishlist goals, recent transactions, and allowance schedule) is injected into the prompt
+5. The conversation history and personalized system prompt are sent to the LLM (Google Gemini 2.5 Flash via the Lovable AI Gateway)
+6. The response is returned to the client in real-time
 
 **Design decisions:**
 - **Age-adaptive prompts:** Three distinct prompt templates tailored to developmental stages
+- **Context-aware personalization:** Real-time balances, savings goals, transactions, and allowance schedule are woven into coaching responses
 - **Mode-based behavior:** Lessons teach concepts, quizzes test understanding, chat answers questions
 - **Safety guardrails:** Prompts explicitly exclude complex financial topics (investing, debt, credit cards)
 - **Stateless execution:** Each request is self-contained; conversation history is managed client-side
-
-> **Note:** The current implementation uses prompt engineering with age and mode context. It does not yet perform dynamic retrieval of the child's financial data (balances, goals, transaction history) for context injection — this is a planned improvement.
+- **Usage limits:** Free-tier users get 10 AI coach sessions per month; Premium unlocks unlimited usage
 
 ---
 
@@ -113,6 +117,7 @@ Designed a relational schema with the following core tables:
 | `subscription_data` | Stripe subscription state |
 | `push_subscriptions` | Web Push notification endpoints |
 | `notifications` | Notification history |
+| `user_roles` | Role assignments (`PARENT` / `CHILD`) for authorization |
 
 ### Entity Relationship Diagram
 
@@ -130,27 +135,44 @@ erDiagram
 ### Security
 
 - **Row Level Security (RLS):** All tables are protected; parents can only access their own children's data, children can only access their own records
-- **Authentication isolation:** Separate auth flows for parents (email/password) and children (name/PIN)
+- **Authentication isolation:** Separate auth flows for parents (email/password) and children (username + family code + password backed by an internal Supabase Auth user)
 - **Server-side validation:** Edge functions verify JWT tokens and ownership before any mutation
 - **Role-based access:** `user_roles` table with PARENT/CHILD enum enforces access control
+- **Parent email privacy:** Parent emails are not stored in the `profiles` table; they are fetched dynamically via the Supabase Auth Admin API
+- **Plain-dollar amounts:** All monetary values are stored as plain dollars (no multiplier) and formatted as `$X.XX`
 
 ### API Design (Edge Functions)
 
 | Endpoint | Purpose |
 |----------|---------|
-| `POST /ai-coach` | Age-adaptive financial coaching via LLM |
+| `POST /ai-coach` | Context-aware, age-adaptive financial coaching via LLM |
 | `POST /create-checkout` | Stripe checkout session creation |
 | `POST /customer-portal` | Stripe customer portal redirect |
 | `POST /check-subscription` | Subscription status verification |
 | `POST /process-allowances` | Automated weekly allowance distribution (cron) |
 | `POST /process-recurring-chores` | Recurring chore generation (cron) |
+| `POST /send-trial-reminder` | Day-10 Premium trial reminder (email + push) |
 | `POST /approve-wishlist-item` | Wishlist purchase approval with balance deduction |
 | `POST /send-push-notification` | Web Push notification delivery |
+| `POST /get-vapid-key` | VAPID public key for push subscriptions |
 | `POST /parent-reset-child-password` | Parent-initiated child password reset |
+| `POST /reset-child-password` | Direct child password reset |
 | `POST /send-child-credentials` | Email child login credentials to parent |
 | `POST /delete-child-profile` | Cascade delete child profile and auth user |
 | `POST /cleanup-old-chores` | Maintenance: remove stale chore records |
 | `POST /cleanup-orphaned-auth-users` | Maintenance: remove orphaned auth entries |
+
+### Database RPCs (SECURITY DEFINER)
+
+Core business logic is encapsulated in PostgreSQL functions to ensure consistent, secure operations:
+
+| Function | Purpose |
+|----------|---------|
+| `fb_process_due_allowance(uuid)` | Atomically distributes a due weekly allowance into jars and advances the next payment date |
+| `fb_verify_cron_secret(text)` | Validates the `X-Cron-Secret` header against `vault.decrypted_secrets` |
+| `fb_spend_wishlist(uuid)` | Atomic wishlist purchase: deducts balances, marks the item purchased, and records a transaction |
+| `fb_increment_ai_coach_usage(uuid)` | Tracks monthly AI coach usage for free-tier limits |
+| `get_user_tier(uuid)` | Returns the effective subscription tier (`free`, `premium`, etc.) |
 
 ---
 
@@ -163,7 +185,8 @@ Integrated Stripe for production billing:
 - Stripe Checkout for secure payment collection
 - Customer portal for self-service subscription management
 - Subscription status synced to database via `subscription_data` table
-- Gated features based on subscription status
+- Trial end dates tracked in `profiles.trial_ends_at` with a `send-trial-reminder` cron on day 10
+- Gated features based on subscription status (automated allowances and recurring chores are Premium-only)
 
 ---
 
@@ -171,9 +194,10 @@ Integrated Stripe for production billing:
 
 - Installable on mobile and desktop (Chrome, Edge, Safari, Firefox)
 - Offline support with service worker caching
-- Push notifications for chore approvals, allowances, and wishlist updates
+- Push notifications for chore approvals, allowances, wishlist updates, and trial reminders
 - App-like experience when launched from home screen
 - Dedicated `/install` page with platform-specific instructions
+- In-app update prompt so users can refresh to the latest version
 
 ---
 
@@ -200,11 +224,16 @@ sequenceDiagram
 
 ## Engineering Challenges Solved
 
-- **Multi-role authentication:** Separate auth flows for parents (email/password) and children (name/PIN) within a single Supabase Auth instance
-- **Automated financial workflows:** Cron-triggered edge functions for allowance processing and recurring chore generation
+- **Multi-role authentication:** Separate auth flows for parents (email/password) and children (username + family code + password) within a single Supabase Auth instance
+- **Automated financial workflows:** `pg_cron` + `pg_net` schedules trigger Edge Functions daily:
+  - `process-allowances` runs at 00:00 UTC, distributing weekly allowances and notifying parents
+  - `process-recurring-chores` runs at 00:05 UTC, spawning daily/weekly chore instances
+  - `send-trial-reminder` runs daily, sending day-10 Premium trial reminders
+  - Cron calls are authenticated with an `X-Cron-Secret` header stored in `vault.decrypted_secrets` and verified via the `fb_verify_cron_secret` RPC
 - **Real-time UX:** Supabase Realtime subscriptions for live balance and chore status updates
 - **Secure multi-tenant isolation:** RLS policies ensuring strict data isolation between families
 - **Offline-first PWA:** Service worker caching with background sync for offline usage
+- **Server-side business logic:** Sensitive operations (allowance distribution, wishlist purchases, usage counting) are executed inside SECURITY DEFINER PostgreSQL functions
 
 ---
 
@@ -221,10 +250,16 @@ src/
 │   └── ...
 ├── pages/               # Route-level page components
 │   ├── Auth.tsx          # Parent login/signup
-│   ├── ChildAuth.tsx     # Child login (name + PIN)
+│   ├── ChildAuth.tsx     # Child login (username + family code + password)
 │   ├── ParentDashboard.tsx
+│   ├── ParentChildDetail.tsx  # Child profile & settings
 │   ├── ChildDashboard.tsx
+│   ├── ChildWishlist.tsx
+│   ├── Pricing.tsx       # Subscription plans
 │   ├── Install.tsx       # PWA installation guide
+│   ├── ResetPassword.tsx
+│   ├── UpdatePassword.tsx
+│   ├── DeveloperDocs.tsx
 │   └── ...
 ├── hooks/               # Custom React hooks
 ├── integrations/        # Supabase client & generated types
@@ -235,6 +270,8 @@ supabase/
 │   ├── ai-coach/
 │   ├── create-checkout/
 │   ├── process-allowances/
+│   ├── process-recurring-chores/
+│   ├── send-trial-reminder/
 │   ├── send-push-notification/
 │   └── ...
 └── migrations/          # Database migration files
@@ -248,7 +285,7 @@ supabase/
 - Relational database design with PostgreSQL
 - Row Level Security (RLS) policy design
 - RESTful API design with serverless edge functions
-- LLM integration with age-adaptive prompt engineering
+- LLM integration with age-adaptive prompt engineering and real-time context injection
 - Stripe payment/subscription integration
 - PWA development with offline support and push notifications
 - Real-time data synchronization
@@ -258,11 +295,11 @@ supabase/
 
 ## Future Improvements
 
-- **Context-aware AI coaching:** Inject child's actual balances, goals, and transaction history into LLM prompts for personalized advice
 - **Spending analytics dashboards:** Visual charts showing spending patterns and savings progress over time
 - **Multi-language support:** Internationalization for broader accessibility
 - **Advanced notification preferences:** Granular control over notification types and frequency
 - **Performance optimization:** Query caching and pagination for large transaction histories
+- **Mobile native apps:** Capacitor wrapper for iOS/Android distribution
 
 ---
 
