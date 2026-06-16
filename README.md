@@ -211,7 +211,6 @@ sequenceDiagram
     participant Frontend
     participant Database
     participant Parent
-    participant EdgeFn
 
     Child->>Frontend: Marks chore as "Done"
     Frontend->>Database: UPDATE status → SUBMITTED
