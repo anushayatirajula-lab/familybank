@@ -16,6 +16,7 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
+const CRON_SECRET = Deno.env.get('CRON_SECRET');
 
 type Result = { name: string; passed: boolean; error?: string; durationMs: number };
 
@@ -278,6 +279,15 @@ async function runAll(): Promise<{ summary: { total: number; passed: number; fai
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  // Require cron secret for unattended runs; allow manual invocation without if not set
+  if (CRON_SECRET) {
+    const provided = req.headers.get('x-cron-secret');
+    if (provided !== CRON_SECRET) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+  }
   try {
     const report = await runAll();
     return new Response(JSON.stringify(report, null, 2), {
