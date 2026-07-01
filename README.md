@@ -302,6 +302,8 @@ supabase/
 - **Performance optimization:** Query caching and pagination for large transaction histories
 - **Mobile native apps:** Capacitor wrapper for iOS/Android distribution
 
+*Note: Context-aware AI coaching has been implemented and is no longer a planned improvement. It is documented in the **AI Coaching System** section above.*
+
 ---
 
 ## Evaluation Workflow
