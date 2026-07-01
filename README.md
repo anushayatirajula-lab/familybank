@@ -294,15 +294,7 @@ supabase/
 
 ---
 
-## Future Improvements
-
-- **Spending analytics dashboards:** Visual charts showing spending patterns and savings progress over time
-- **Multi-language support:** Internationalization for broader accessibility
-- **Advanced notification preferences:** Granular control over notification types and frequency
-- **Performance optimization:** Query caching and pagination for large transaction histories
-- **Mobile native apps:** Capacitor wrapper for iOS/Android distribution
-
-*Note: Context-aware AI coaching has been implemented and is no longer a planned improvement. It is documented in the **AI Coaching System** section above.*
+*Note: Context-aware AI coaching and spending analytics dashboards have been implemented and are no longer planned improvements. They are documented in the sections above.*
 
 ---
 
